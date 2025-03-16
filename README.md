@@ -70,6 +70,10 @@ EttusResearch recommends sticking to this directory structure and file layout.
   Like with the gateware, these get installed into the RFNoC package data
   directory, e.g., `/usr/share/uhd/rfnoc/blocks/*.yml`.
 
+* `tests`: This directory contains files used by the block testbenches or 
+  useful files for simulations. This directory is not part of the default
+  structure of a RFNoC OOT module.
+
 ## Building this module
 
 To build and install this module, follow these steps:
