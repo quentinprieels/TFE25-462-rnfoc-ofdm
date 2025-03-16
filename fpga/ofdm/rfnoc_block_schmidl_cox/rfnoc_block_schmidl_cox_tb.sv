@@ -183,11 +183,13 @@ module rfnoc_block_schmidl_cox_tb;
     // Test Sequences
     //--------------------------------
 
+    // Sending value 0,100 to 64,164
+    /*
     begin
       item_t send_samples[$];
       item_t recv_samples[$];
 
-      test.start_test("This is a test", 2ms);
+      test.start_test("This is a test", 10us);
       
       send_samples = {};
       for (int i = 0; i < SPP; i++) begin
@@ -220,6 +222,112 @@ module rfnoc_block_schmidl_cox_tb;
              i, sample_in[31:16], sample_in[15:0], sample_out[31:16], sample_out[15:0]);
       end
   
+      test.end_test();
+    end
+    */
+
+    // Sending values from file
+    begin
+      item_t send_samples[$];
+      item_t recv_samples[$];
+      int input_file, output_file, num_samples, status, packets_sent;
+      real i_val, q_val;
+      string input_filename, output_input_filename;
+      bit end_of_file;
+
+      test.start_test("Reading IQ samples from file and processing", 10ms);
+      
+      // File containing IQ samples
+      input_filename = "/export/home/usrpconfig/Documents/GitHub/TFE25-462/rfnoc-ofdm/tests/signal_K16_CP8_CPp8_M1_N1_preambleBPSK_payloadQPSK.txt";
+      output_input_filename = "/export/home/usrpconfig/Documents/GitHub/TFE25-462/rfnoc-ofdm/tests/signal_K16_CP8_CPp8_M1_N1_preambleBPSK_payloadQPSK_out.txt";
+
+      // Open the input file for reading
+      input_file = $fopen(input_filename, "r");
+      if (input_file == 0) begin
+        `ASSERT_ERROR(0, $sformatf("Failed to open file %s", input_filename));
+      end
+
+      // Open the output file for writing
+      output_file = $fopen(output_input_filename, "w");
+      if (output_file == 0) begin
+        `ASSERT_ERROR(0, $sformatf("Failed to open file %s", output_input_filename));
+      end
+
+      // Initialize variables
+      num_samples = 0;
+      packets_sent = 0;
+      send_samples = {};
+      end_of_file = 0;
+
+      // Reand and process the file
+      while (!end_of_file) begin
+        // Read I value
+        status = $fscanf(input_file, "%e", i_val);
+        if (status != 1) begin
+          end_of_file = 1;
+        end else begin
+
+          // Read Q value
+          status = $fscanf(input_file, "%e", q_val);
+          if (status != 1) begin
+            $display("Warning: Found I sample without Q sample at end of file");
+            q_val = 0.0;
+            end_of_file = 1;
+          end
+
+          // Convert floating point to sc16 format (signed 16-bit integers)
+          // Scale to use full range but avoid overflow
+          send_samples.push_back({
+            16'($rtoi(i_val * 32767.0)),  // I - scale to 16-bit signed
+            16'($rtoi(q_val * 32767.0))   // Q - scale to 16-bit signed
+          });
+          num_samples++;
+        end
+
+        // When we have SPP samples or reached end of file, send the packet
+        if (send_samples.size() >= SPP || (end_of_file && send_samples.size() > 0)) begin
+          // Pad with zeros if we don't have enough samples
+          while (send_samples.size() < SPP) begin
+            send_samples.push_back({16'(0), 16'(0)}); // Pad with zeros
+          end
+
+          // Send the packet
+          $display("Sending packet %0d with %0d samples", packets_sent, send_samples.size());
+          blk_ctrl.send_items(0, send_samples);
+
+          // Wait for and receive the processed packet
+          blk_ctrl.recv_items(0, recv_samples);
+
+          // Process and validate the received samples
+          `ASSERT_ERROR(recv_samples.size() == SPP,
+            $sformatf("Received payload didn't match size of payload sent (expected %0d, got %0d)", SPP, recv_samples.size()));
+
+          // Convert the received samples back to floating point and write to output file
+          for (int i=0; i < recv_samples.size(); i++) begin
+            real output_i, output_q;
+            item_t sample_out;
+            sample_out = recv_samples[i];
+
+            // Convert back to floating point
+            output_i = $signed(sample_out[31:16]) / 32767.0;
+            output_q = $signed(sample_out[15:0]) / 32767.0;
+
+            // Write to output file
+            $fwrite(output_file, "%.16e\n", output_i);
+            $fwrite(output_file, "%.16e\n", output_q);
+          end
+          
+          // Prepare for next packet
+          send_samples = {};
+          packets_sent++;
+        end
+      end
+
+      // Close the file
+      $fclose(input_file);
+      $fclose(output_file);
+
+      $display("Processed %0d samples in %0d packets", num_samples, packets_sent);
       test.end_test();
     end
 
