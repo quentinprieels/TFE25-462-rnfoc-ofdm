@@ -77,8 +77,9 @@ def plot_data(data_in: np.ndarray, data_out: np.ndarray, check_data: np.ndarray 
     plt.ylabel('Magnitude')
     plt.legend()
     plt.grid()
+    plt.tight_layout()
+    plt.savefig(f"{filename}.png")
     plt.show()
-    plt.savefig('input_output_comparison.pdf')
 
 
 def main(args):
