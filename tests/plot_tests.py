@@ -63,9 +63,10 @@ def metric_calculator(data, fft_size=16):
     return magnitude_squared
     
 
-def plot_data(data_in: np.ndarray, data_out: np.ndarray, check_data: np.ndarray = None):
+def plot_data(data_in: np.ndarray, data_out: np.ndarray, check_data: np.ndarray = None, filename: str = None):
     plt.figure(figsize=(15, 5))
     plt.suptitle("Input and Output Signals comparison", fontsize=14, fontweight='bold')
+    plt.title(filename, fontsize=11, fontstyle='italic')
     
     plt.plot(np.abs(data_in), label='Input Signal', color='tab:blue', alpha=0.5)
     plt.plot(np.abs(data_out), label='Output Signal', color='tab:red')
@@ -77,7 +78,7 @@ def plot_data(data_in: np.ndarray, data_out: np.ndarray, check_data: np.ndarray 
     plt.legend()
     plt.grid()
     plt.show()
-    # plt.savefig('input_output_comparison.png')
+    plt.savefig('input_output_comparison.pdf')
 
 
 def main(args):
@@ -91,7 +92,8 @@ def main(args):
     input_data = read_iq_file(input_file)
     output_data = read_iq_file(output_file)
     
-    plot_data(input_data, output_data, metric_calculator(input_data, fft_size=16))
+    filename_title = input_file.split('.')[0]
+    plot_data(input_data, output_data, filename=filename_title) #, metric_calculator(input_data, fft_size=16))
 
 if __name__ == '__main__':
     main(sys.argv)

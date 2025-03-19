@@ -33,7 +33,7 @@ data:
       nipc: 1
       context_fifo_depth: 2
       payload_fifo_depth: 2
-      format: int32
+      format: sc32
   outputs:
     out:
       index: 0
@@ -41,4 +41,4 @@ data:
       nipc: 1
       context_fifo_depth: 2
       payload_fifo_depth: 2
-      format: int32
+      format: sc32

@@ -11,6 +11,7 @@
 # is no block controller), then this directory will be skipped.
 list(APPEND rfnoc_ofdm_sources
     schmidl_cox_block_control.cpp
+    schmidl_cox_block_control.cpp
     #my_block_control.cpp
 )
 if(NOT rfnoc_ofdm_sources)

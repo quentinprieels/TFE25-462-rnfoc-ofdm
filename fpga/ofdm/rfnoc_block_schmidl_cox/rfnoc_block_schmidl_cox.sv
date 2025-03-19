@@ -189,8 +189,8 @@ module rfnoc_block_schmidl_cox #(
   //---------------------------------------------------------------------------
   // User Logic
   //---------------------------------------------------------------------------
-  
-  // Instanciate another module
+
+    // Instanciate another module
   metric_caclulator mc0 (
     .clk(axis_data_clk),
     .reset(axis_data_rst),  // Used to reset the module on device startup
@@ -204,15 +204,6 @@ module rfnoc_block_schmidl_cox #(
     .o_tvalid(s_out_payload_tvalid),
     .o_tready(s_out_payload_tready)
   );
-
-  /*
-  assign s_out_payload_tdata[31:16] = m_in_payload_tdata[31:16] + 1;
-  assign s_out_payload_tdata[15:0] = m_in_payload_tdata[15:0] + 1;
-  assign s_out_payload_tlast = m_in_payload_tlast;
-  assign s_out_payload_tvalid = m_in_payload_tvalid;
-  assign m_in_payload_tready = s_out_payload_tready;
-  */
-
 
   // Set control to default value
   assign m_ctrlport_resp_ack = 1'b0;

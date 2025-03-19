@@ -30,7 +30,7 @@ module rfnoc_block_schmidl_cox_tb;
   localparam int    MTU             = 10;    // Log2 of max transmission unit in CHDR words
   localparam int    NUM_PORTS_I     = 1;
   localparam int    NUM_PORTS_O     = 1;
-  localparam int    ITEM_W          = 32;   // Sample size in bits
+  localparam int    ITEM_W          = 32;    // Sample size in bits
   localparam int    SPP             = 64;    // Samples per packet
   localparam int    PKT_SIZE_BYTES  = SPP * (ITEM_W/8);
   localparam int    STALL_PROB      = 25;    // Default BFM stall probability
@@ -151,6 +151,7 @@ module rfnoc_block_schmidl_cox_tb;
   //---------------------------------------------------------------------------
 
   initial begin : tb_main
+    // Dump VCD file for waveform debugging
     $dumpfile("rfnoc_block_schmidl_cox_tb.vcd");
     $dumpvars(0, rfnoc_block_schmidl_cox_tb);
 
@@ -183,51 +184,8 @@ module rfnoc_block_schmidl_cox_tb;
     // Test Sequences
     //--------------------------------
 
-    // Sending value 0,100 to 64,164
-    /*
-    begin
-      item_t send_samples[$];
-      item_t recv_samples[$];
-
-      test.start_test("This is a test", 10us);
-      
-      send_samples = {};
-      for (int i = 0; i < SPP; i++) begin
-        send_samples.push_back({
-          16'(i),     // I
-          16'(100+i)  // Q
-        });
-      end
-
-      // Queue a packet for transfer
-      blk_ctrl.send_items(0, send_samples);
-
-      // Receive the output packet
-      blk_ctrl.recv_items(0, recv_samples);
-
-      // Check the resulting payload size
-      `ASSERT_ERROR(recv_samples.size() == SPP,
-        "Received payload didn't match size of payload sent");
-      
-      // Check that payload input matches payload output (block only fwd data)
-      for (int i=0; i < SPP; i++) begin
-        item_t sample_in;
-        item_t expected;
-        item_t sample_out;
-
-        sample_in  = send_samples[i];
-        sample_out = recv_samples[i];
-
-        $display("Sample %0d: Input I=%0d, Q=%0d, Output I=%0d, Q=%0d", 
-             i, sample_in[31:16], sample_in[15:0], sample_out[31:16], sample_out[15:0]);
-      end
-  
-      test.end_test();
-    end
-    */
-
-    // Sending values from file
-    begin
+    // Send file to block
+     begin
       item_t send_samples[$];
       item_t recv_samples[$];
       int input_file, output_file, num_samples, status, packets_sent;

@@ -8,6 +8,7 @@
 install(
     FILES
     schmidl_cox_block_control.hpp
+    schmidl_cox_block_control.hpp
     #my_block_control.hpp
     DESTINATION include/rfnoc/ofdm
     COMPONENT headers

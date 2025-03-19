@@ -19,23 +19,17 @@ include $(BASE_DIR)/../tools/make/viv_sim_preamble.mak
 #-------------------------------------------------
 # Design Specific
 #-------------------------------------------------
-
-# In-tree IP
-LIB_IP_DIR = $(BASE_DIR)/../lib/ip
-include $(LIB_IP_DIR)/complex_multiplier/Makefile.inc
-
 # Include makefiles and sources for the DUT and its
 # dependencies.
 include $(BASE_DIR)/../lib/rfnoc/core/Makefile.srcs
 include $(BASE_DIR)/../lib/rfnoc/utils/Makefile.srcs
 include Makefile.srcs
 
-DESIGN_SRCS += $(abspath 		  \
-$(RFNOC_SRCS)      				  \
-$(RFNOC_CORE_SRCS) 				  \
-$(RFNOC_UTIL_SRCS) 				  \
-$(RFNOC_BLOCK_SCHMIDL_COX_SRCS)	  \
-$(LIB_IP_COMPLEX_MULTIPLIER_SRCS) \
+DESIGN_SRCS += $(abspath \
+$(RFNOC_SRCS)      \
+$(RFNOC_CORE_SRCS) \
+$(RFNOC_UTIL_SRCS) \
+$(RFNOC_BLOCK_SCHMIDL_COX_SRCS)  \
 )
 
 #-------------------------------------------------
@@ -43,7 +37,6 @@ $(LIB_IP_COMPLEX_MULTIPLIER_SRCS) \
 #-------------------------------------------------
 SIM_TOP = rfnoc_block_schmidl_cox_tb
 SIM_SRCS = \
-$(abspath $(IP_BUILD_DIR)/complex_multiplier/sim/complex_multiplier.vhd) \
 $(abspath rfnoc_block_schmidl_cox_tb.sv) \
 
 #-------------------------------------------------

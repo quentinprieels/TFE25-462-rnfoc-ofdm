@@ -26,6 +26,7 @@ void* init_numpy()
     return NULL;
 }
 #include "schmidl_cox_block_control_python.hpp"
+#include "schmidl_cox_block_control_python.hpp"
 
 PYBIND11_MODULE(rfnoc_ofdm_python, m)
 {
@@ -35,4 +36,5 @@ PYBIND11_MODULE(rfnoc_ofdm_python, m)
 
     // uhd::rfnoc::python::export_noc_block_base(m);
         export_schmidl_cox_block_control(m);
+    export_schmidl_cox_block_control(m);
 }
