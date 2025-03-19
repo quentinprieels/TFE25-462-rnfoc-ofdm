@@ -193,11 +193,11 @@ module rfnoc_block_schmidl_cox_tb;
       string input_filename, output_input_filename;
       bit end_of_file;
 
-      test.start_test("Reading IQ samples from file and processing", 10ms);
+      test.start_test("Reading IQ samples from file and processing", 250us);
       
       // File containing IQ samples
-      input_filename = "/export/home/usrpconfig/Documents/GitHub/TFE25-462/rfnoc-ofdm/tests/signal_K16_CP8_CPp8_M1_N1_preambleBPSK_payloadQPSK.txt";
-      output_input_filename = "/export/home/usrpconfig/Documents/GitHub/TFE25-462/rfnoc-ofdm/tests/signal_K16_CP8_CPp8_M1_N1_preambleBPSK_payloadQPSK_out.txt";
+      input_filename = "/export/home/usrpconfig/Documents/GitHub/TFE25-462/rfnoc-ofdm/tests/signal_K1024_CP128_CPp128_M1_N1_preambleBPSK_payloadQPSK.txt";
+      output_input_filename = "/export/home/usrpconfig/Documents/GitHub/TFE25-462/rfnoc-ofdm/tests/signal_K1024_CP128_CPp128_M1_N1_preambleBPSK_payloadQPSK_out.txt";
 
       // Open the input file for reading
       input_file = $fopen(input_filename, "r");
