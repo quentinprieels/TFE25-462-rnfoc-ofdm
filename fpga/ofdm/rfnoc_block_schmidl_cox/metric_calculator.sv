@@ -49,7 +49,7 @@ split_stream_fifo #(
   .ACTIVE_MASK(4'b0111)
 ) spliter0 (
   .clk(clk), .reset(reset), .clear(clear),
-  .i_tdata(i_tdata), .i_tlast(i_tlast), .i_tvalid(i_tvalid), .i_tready(i_tready),
+  .i_tdata(i_tdata),   .i_tlast(i_tlast),   .i_tvalid(i_tvalid),   .i_tready(i_tready),
   .o0_tdata(c0_tdata), .o0_tlast(c0_tlast), .o0_tvalid(c0_tvalid), .o0_tready(c0_tready),
   .o1_tdata(c1_tdata), .o1_tlast(c1_tlast), .o1_tvalid(c1_tvalid), .o1_tready(c1_tready),
   .o2_tdata(c7_tdata), .o2_tlast(c7_tlast), .o2_tvalid(c7_tvalid), .o2_tready(c7_tready),
@@ -103,12 +103,13 @@ conj #(
  * In1: c3 (= c1[-HALF_FFT_SIZE]*) -- t1
  * Out: c5 (= c1 * c2)             -- t0 => n4 clipped to 16 bits
  */
-wire [63:0] c4_unscaled;
+wire [63:0] c4_unscaled_tdata;
+wire        c4_unscaled_tlast, c4_unscaled_tvalid, c4_unscaled_tready;
 cmul cmul0 (
   .clk(clk), .reset(reset),
-  .a_tdata(c1_tdata), .a_tlast(c1_tlast), .a_tvalid(c1_tvalid), .a_tready(c1_tready),
-  .b_tdata(c3_tdata), .b_tlast(c3_tlast), .b_tvalid(c3_tvalid), .b_tready(c3_tready),
-  .o_tdata(c4_unscaled), .o_tlast(c4_tlast), .o_tvalid(c4_tvalid), .o_tready(c4_tready)
+  .a_tdata(c1_tdata),    .a_tlast(c1_tlast), .a_tvalid(c1_tvalid), .a_tready(c1_tready),
+  .b_tdata(c3_tdata),    .b_tlast(c3_tlast), .b_tvalid(c3_tvalid), .b_tready(c3_tready),
+  .o_tdata(c4_unscaled_tdata), .o_tlast(c4_unscaled_tlast), .o_tvalid(c4_unscaled_tvalid), .o_tready(c4_unscaled_tready)
 );
 
 // Clip the 32-bit product to 16 bits
@@ -117,7 +118,7 @@ axi_clip_complex #(
   .WIDTH_OUT(16)
 ) clip0 (
   .clk(clk), .reset(reset),
-  .i_tdata(c4_unscaled), .i_tlast(c4_tlast), .i_tvalid(c4_tvalid), .i_tready(c4_tready),
+  .i_tdata(c4_unscaled_tdata), .i_tlast(c4_unscaled_tlast), .i_tvalid(c4_unscaled_tvalid), .i_tready(c4_unscaled_tready),
   .o_tdata(c5_tdata), .o_tlast(c5_tlast), .o_tvalid(c5_tvalid), .o_tready(c5_tready)
 );
 
@@ -140,7 +141,7 @@ moving_sum #(
   .clk(clk), .reset(reset), .clear(clear),
   .len(HALF_FFT_SIZE[HALF_FFT_SIZE_WIDTH-1:0]),
   .i_tdata(c5_tdata[31:16]), .i_tlast(c5_tlast), .i_tvalid(c5_tvalid), .i_tready(c5_tready),
-  .o_tdata(c6_i_unscaled), .o_tlast(c6_tlast), .o_tvalid(c6_tvalid), .o_tready(c6_tready)
+  .o_tdata(c6_i_unscaled),   .o_tlast(c6_tlast), .o_tvalid(c6_tvalid), .o_tready(c6_tready)
 );
 
 moving_sum #(
@@ -149,8 +150,8 @@ moving_sum #(
 ) sum1 (
   .clk(clk), .reset(reset), .clear(clear),
   .len(HALF_FFT_SIZE[HALF_FFT_SIZE_WIDTH-1:0]),
-  .i_tdata(c5_tdata[15:0]), .i_tlast(c5_tlast), .i_tvalid(c5_tvalid), .i_tready(),  // c5_tready is set by sum0
-  .o_tdata(c6_q_unscaled), .o_tlast(), .o_tvalid(), .o_tready(c6_tready)            // c6_tlast & nf_tvalid are set by sum0
+  .i_tdata(c5_tdata[15:0]), .i_tlast(c5_tlast), .i_tvalid(c5_tvalid), .i_tready(),          // c5_tready is set by sum0
+  .o_tdata(c6_q_unscaled),  .o_tlast(),         .o_tvalid(),          .o_tready(c6_tready)  // c6_tlast & nf_tvalid are set by sum0
 );
 
 // P(d) complex signal is in c6_tdata
@@ -167,7 +168,6 @@ moving_sum #(
  * In:  c7            -- t0
  * Out: r8 (= |c7|^2) -- t0
  */
-
 complex_to_magsq #(
   .WIDTH(16)
 ) magsq0 (
@@ -184,7 +184,6 @@ complex_to_magsq #(
  * In:  r8          -- t0
  * Out: r9_unscaled -- t0
  */
-
 wire [32+$clog2(HALF_FFT_SIZE+1)-1:0] r9_unscaled;
 assign r9_tdata = {r9_unscaled[32+$clog2(HALF_FFT_SIZE+1)-1:$clog2(HALF_FFT_SIZE+1)]};  // keep only the 32 MSB
 moving_sum #(
@@ -193,7 +192,7 @@ moving_sum #(
 ) sum2 (
   .clk(clk), .reset(reset), .clear(clear),
   .len(HALF_FFT_SIZE[HALF_FFT_SIZE_WIDTH-1:0]),
-  .i_tdata(r8_tdata), .i_tlast(r8_tlast), .i_tvalid(r8_tvalid), .i_tready(r8_tready),
+  .i_tdata(r8_tdata),    .i_tlast(r8_tlast), .i_tvalid(r8_tvalid), .i_tready(r8_tready),
   .o_tdata(r9_unscaled), .o_tlast(r9_tlast), .o_tvalid(r9_tvalid), .o_tready(r9_tready)
 );
 
@@ -215,7 +214,7 @@ complex_to_magsq #(
   .WIDTH(16)
 ) magsq1 (
   .clk(clk), .reset(reset), .clear(clear),
-  .i_tdata(c6_tdata), .i_tlast(c6_tlast), .i_tvalid(c6_tvalid), .i_tready(c6_tready),
+  .i_tdata(c6_tdata),  .i_tlast(c6_tlast),  .i_tvalid(c6_tvalid),  .i_tready(c6_tready),
   .o_tdata(r10_tdata), .o_tlast(r10_tlast), .o_tvalid(r10_tvalid), .o_tready(r10_tready)
 );
 
@@ -227,18 +226,19 @@ complex_to_magsq #(
  * In:  r9           -- t0
  * Out: r11 (= r9^2) -- t0
  */
-/*
-multiply #(
-  .WIDTH_A(32),
-  .WIDTH_B(32),
+wire [15:0] r9_scaled;
+assign r9_scaled = r9_tdata >> 16;  // scale the 32-bit signal to 16 bits
+mult #(
+  .WIDTH_A(16),
+  .WIDTH_B(16),
   .WIDTH_P(32)
 ) mult0 (
   .clk(clk), .reset(reset),
-  .a_tdata(r9_tdata), .a_tlast(r9_tlast), .a_tvalid(r9_tvalid), .a_tready(r9_tready),
-  .b_tdata(r9_tdata), .b_tlast(r9_tlast), .b_tvalid(r9_tvalid), .b_tready(r9_tready),
+  .a_tdata(r9_scaled), .a_tlast(r9_tlast),  .a_tvalid(r9_tvalid),  .a_tready(r9_tready),
+  .b_tdata(r9_scaled), .b_tlast(r9_tlast),  .b_tvalid(r9_tvalid),  .b_tready(r9_tready),
   .p_tdata(r11_tdata), .p_tlast(r11_tlast), .p_tvalid(r11_tvalid), .p_tready(r11_tready)
 );
-*/
+
 
 /*
  * Divide the correlation metric by the energy metric
@@ -249,22 +249,50 @@ multiply #(
  * Out: r12 (= r10 / r11) -- t0
  *
  * Note: use of the divide_int32 in-tree Xilinx IP core
+ * Note: We need to buffer the input streams to avoid deadlocks
  */
-/*
+wire [31:0] r10_buffered_tdata;
+wire        r10_buffered_tlast, r10_buffered_tvalid, r10_buffered_tready;
+axi_fifo #(
+  .WIDTH(33),
+  .SIZE(4)
+) buffer0 (
+  .clk(clk), .reset(reset), .clear(clear),
+  .i_tdata({r10_tlast, r10_tdata}), .i_tvalid(r10_tvalid), .i_tready(r10_tready),
+  .o_tdata({r10_buffered_tlast, r10_buffered_tdata}), .o_tvalid(r10_buffered_tvalid), .o_tready(r10_buffered_tready)
+);
+
+wire [31:0] r11_buffered_tdata;
+wire        r11_buffered_tlast, r11_buffered_tvalid, r11_buffered_tready;
+axi_fifo #(
+  .WIDTH(33),
+  .SIZE(4)
+) buffer1 (
+  .clk(clk), .reset(reset), .clear(clear),
+  .i_tdata({r11_tlast, r11_tdata}), .i_tvalid(r11_tvalid), .i_tready(r11_tready),
+  .o_tdata({r11_buffered_tlast, r11_buffered_tdata}), .o_tvalid(r11_buffered_tvalid), .o_tready(r11_buffered_tready)
+);
+
+wire [63:0] r12_unscaled;
+assign r12_tdata = r12_unscaled[63:32];  // keep only the 32 MSB (quotient), discard the 32 LSB (fractional)
+wire [31:0] r11_buffered_safe_divisor;
+assign r11_buffered_safe_divisor = (r11_buffered_tdata == 0) ? 1 : r11_buffered_tdata;  // avoid division by zero
 divide_int32 divide0 (
   .aclk(clk), .aresetn(~reset),
-  .s_axis_dividend_tdata(r10_tdata), .s_axis_dividend_tlast(r10_tlast), .s_axis_dividend_tvalid(r10_tvalid), .s_axis_dividend_tready(r10_tready),
-  .s_axis_divisor_tdata(r11_tdata), .s_axis_divisor_tlast(r11_tlast), .s_axis_divisor_tvalid(r11_tvalid), .s_axis_divisor_tready(r11_tready),
-  .m_axis_dout_tdata(r12_tdata), .m_axis_dout_tlast(r12_tlast), .m_axis_dout_tvalid(r12_tvalid), .m_axis_dout_tready(r12_tready)
+  .s_axis_dividend_tdata(r10_buffered_tdata),       .s_axis_dividend_tlast(r10_buffered_tlast), 
+  .s_axis_dividend_tvalid(r10_buffered_tvalid),     .s_axis_dividend_tready(r10_buffered_tready),
+  .s_axis_divisor_tdata(r11_buffered_safe_divisor), .s_axis_divisor_tlast(r11_buffered_tlast), 
+  .s_axis_divisor_tvalid(r11_buffered_tvalid),      .s_axis_divisor_tready(r11_buffered_tready),
+  .m_axis_dout_tdata(r12_unscaled),                 .m_axis_dout_tlast(r12_tlast), 
+  .m_axis_dout_tvalid(r12_tvalid),                  .m_axis_dout_tready(r12_tready),
+  .m_axis_dout_tuser()
 );
-*/
 
 
 // Connect the output stream to the output port
-assign o_tdata  = r10_tdata;
-assign o_tlast  = r10_tlast;
-assign o_tvalid = r10_tvalid;
-assign r10_tready = o_tready;
-assign r9_tready = o_tready;
+assign o_tdata  = r12_tdata;
+assign o_tlast  = r12_tlast;
+assign o_tvalid = r12_tvalid;
+assign r12_tready = o_tready;
 
-endmodule // my_module 
+endmodule // metric_calculator
