@@ -22,7 +22,8 @@ localparam HALF_FFT_SIZE = FFT_SIZE / 2;
 localparam HALF_FFT_SIZE_WIDTH = $clog2(HALF_FFT_SIZE + 1);
 
 // Complex signals: I on [31:16], Q on [15:0]
-wire [31:0] c0_tdata,  c1_tdata,  c2_tdata,  c3_tdata,             c5_tdata,  c6_tdata,  c7_tdata; 
+wire [31:0] c0_tdata,  c1_tdata,  c2_tdata,  c3_tdata,             c5_tdata,  c6_tdata,  c7_tdata;
+wire [63:0]                                             c4_tdata;
 wire        c0_tlast,  c1_tlast,  c2_tlast,  c3_tlast,  c4_tlast,  c5_tlast,  c6_tlast,  c7_tlast;   
 wire        c0_tvalid, c1_tvalid, c2_tvalid, c3_tvalid, c4_tvalid, c5_tvalid, c6_tvalid, c7_tvalid;
 wire        c0_tready, c1_tready, c2_tready, c3_tready, c4_tready, c5_tready, c6_tready, c7_tready;
@@ -103,13 +104,11 @@ conj #(
  * In1: c3 (= c1[-HALF_FFT_SIZE]*) -- t1
  * Out: c5 (= c1 * c2)             -- t0 => n4 clipped to 16 bits
  */
-wire [63:0] c4_unscaled_tdata;
-wire        c4_unscaled_tlast, c4_unscaled_tvalid, c4_unscaled_tready;
 cmul cmul0 (
   .clk(clk), .reset(reset),
   .a_tdata(c1_tdata),    .a_tlast(c1_tlast), .a_tvalid(c1_tvalid), .a_tready(c1_tready),
   .b_tdata(c3_tdata),    .b_tlast(c3_tlast), .b_tvalid(c3_tvalid), .b_tready(c3_tready),
-  .o_tdata(c4_unscaled_tdata), .o_tlast(c4_unscaled_tlast), .o_tvalid(c4_unscaled_tvalid), .o_tready(c4_unscaled_tready)
+  .o_tdata(c4_tdata), .o_tlast(c4_tlast), .o_tvalid(c4_tvalid), .o_tready(c4_tready)
 );
 
 // Clip the 32-bit product to 16 bits
@@ -118,7 +117,7 @@ axi_clip_complex #(
   .WIDTH_OUT(16)
 ) clip0 (
   .clk(clk), .reset(reset),
-  .i_tdata(c4_unscaled_tdata), .i_tlast(c4_unscaled_tlast), .i_tvalid(c4_unscaled_tvalid), .i_tready(c4_unscaled_tready),
+  .i_tdata(c4_tdata), .i_tlast(c4_tlast), .i_tvalid(c4_tvalid), .i_tready(c4_tready),
   .o_tdata(c5_tdata), .o_tlast(c5_tlast), .o_tvalid(c5_tvalid), .o_tready(c5_tready)
 );
 
@@ -225,13 +224,16 @@ complex_to_magsq #(
  *
  * In:  r9           -- t0
  * Out: r11 (= r9^2) -- t0
+ * 
+ * Note: this block has a latency of 3 cycles
  */
 wire [15:0] r9_scaled;
 assign r9_scaled = r9_tdata >> 16;  // scale the 32-bit signal to 16 bits
 mult #(
   .WIDTH_A(16),
   .WIDTH_B(16),
-  .WIDTH_P(32)
+  .WIDTH_P(32),
+  .LATENCY(3)
 ) mult0 (
   .clk(clk), .reset(reset),
   .a_tdata(r9_scaled), .a_tlast(r9_tlast),  .a_tvalid(r9_tvalid),  .a_tready(r9_tready),
@@ -255,7 +257,7 @@ wire [31:0] r10_buffered_tdata;
 wire        r10_buffered_tlast, r10_buffered_tvalid, r10_buffered_tready;
 axi_fifo #(
   .WIDTH(33),
-  .SIZE(4)
+  .SIZE(4 + 3)  // 4 samples + 3 samples of latency => compensate for the latency of the mult block
 ) buffer0 (
   .clk(clk), .reset(reset), .clear(clear),
   .i_tdata({r10_tlast, r10_tdata}), .i_tvalid(r10_tvalid), .i_tready(r10_tready),
