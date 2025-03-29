@@ -185,9 +185,10 @@ module rfnoc_block_schmidl_cox_tb;
     //--------------------------------
 
     // Send file to block
-     begin
+    begin
       item_t send_samples[$];
       item_t recv_samples[$];
+      logic signed [15:0] i_sample, q_sample;
       int input_file, output_file, num_samples, status, packets_sent;
       real i_val, q_val;
       string input_filename, output_input_filename;
@@ -235,10 +236,9 @@ module rfnoc_block_schmidl_cox_tb;
 
           // Convert floating point to sc16 format (signed 16-bit integers)
           // Scale to use full range but avoid overflow
-          send_samples.push_back({
-            16'($rtoi(i_val * 32767.0)),  // I - scale to 16-bit signed
-            16'($rtoi(q_val * 32767.0))   // Q - scale to 16-bit signed
-          });
+          i_sample = $signed($rtoi(i_val * 32767.0));
+          q_sample = $signed($rtoi(q_val * 32767.0));
+          send_samples.push_back({i_sample, q_sample});
           num_samples++;
         end
 

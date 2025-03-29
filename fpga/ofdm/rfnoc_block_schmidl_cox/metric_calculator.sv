@@ -67,7 +67,7 @@ split_stream_fifo #(
  * Out = In[-HALF_FFT_SIZE]
  *
  * In:  c0        -- t0
- * Out: c1 (= c0) -- t1 (= t0 - HALF_FFT_SIZE)
+ * Out: c2 (= c0) -- t1 (= t0 - HALF_FFT_SIZE)
  */
 delay_fifo #(
   .WIDTH(32),
@@ -111,7 +111,8 @@ cmul cmul0 (
   .o_tdata(c4_tdata), .o_tlast(c4_tlast), .o_tvalid(c4_tvalid), .o_tready(c4_tready)
 );
 
-// Clip the 32-bit product to 16 bits
+// Clip the 32-bit product to 16 bits (LSB)
+/*
 axi_clip_complex #(
   .WIDTH_IN(32),
   .WIDTH_OUT(16)
@@ -120,6 +121,11 @@ axi_clip_complex #(
   .i_tdata(c4_tdata), .i_tlast(c4_tlast), .i_tvalid(c4_tvalid), .i_tready(c4_tready),
   .o_tdata(c5_tdata), .o_tlast(c5_tlast), .o_tvalid(c5_tvalid), .o_tready(c5_tready)
 );
+*/
+assign c5_tdata = c4_tdata[63:32];  // keep only the 32 MSB
+assign c5_tlast = c4_tlast;
+assign c5_tvalid = c4_tvalid;
+assign c4_tready = c5_tready;
 
 
 /*
