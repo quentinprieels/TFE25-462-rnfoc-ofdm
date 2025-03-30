@@ -111,16 +111,12 @@ cmul cmul0 (
   .o_tdata(c4_tdata), .o_tlast(c4_tlast), .o_tvalid(c4_tvalid), .o_tready(c4_tready)
 );
 
-// Clip the 32-bit product to 16 bits (LSB)
-axi_clip_complex #(
-  .WIDTH_IN(32),
-  .WIDTH_OUT(16)
-) clip0 (
-  .clk(clk), .reset(reset),
-  .i_tdata(c4_tdata), .i_tlast(c4_tlast), .i_tvalid(c4_tvalid), .i_tready(c4_tready),
-  .o_tdata(c5_tdata), .o_tlast(c5_tlast), .o_tvalid(c5_tvalid), .o_tready(c5_tready)
-);
-
+// Truncate the output stream to 16 bits
+assign c5_tdata[31:16] = c4_tdata[63:48]; // keep only the 16 MSB
+assign c5_tdata[15:0]  = c4_tdata[31:16];  // keep only the 16 LSB
+assign c5_tlast = c4_tlast;
+assign c5_tvalid = c4_tvalid;
+assign c4_tready = c5_tready;
 
 /*
  * Calculate the moving sum of the product stream over a window of HALF_FFT_SIZE samples
