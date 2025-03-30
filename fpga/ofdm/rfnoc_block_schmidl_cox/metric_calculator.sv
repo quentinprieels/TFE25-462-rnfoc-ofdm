@@ -144,16 +144,12 @@ moving_sum #(
 );
 
 
-// Clip the output stream to 16 bits
-axi_clip_complex #( 
-  .WIDTH_IN(32),
-  .WIDTH_OUT(16)
-) clip0 (
-  .clk(clk), .reset(reset),
-  .i_tdata(c5_tdata), .i_tlast(c5_tlast), .i_tvalid(c5_tvalid), .i_tready(c5_tready),
-  .o_tdata(c6_tdata), .o_tlast(c6_tlast), .o_tvalid(c6_tvalid), .o_tready(c6_tready)
-);
-
+// Truncate the output stream to 16 bits
+assign c6_tdata[31:16] = c5_tdata[63:48];  // keep only the 16 MSB
+assign c6_tdata[15:0]  = c5_tdata[31:16];  // keep only the 16 LSB
+assign c6_tlast = c5_tlast;
+assign c6_tvalid = c5_tvalid;
+assign c5_tready = c6_tready;
 
 // P(d) complex signal is in c6_tdata
 
