@@ -22,8 +22,8 @@ localparam HALF_FFT_SIZE = FFT_SIZE / 2;
 localparam HALF_FFT_SIZE_WIDTH = $clog2(HALF_FFT_SIZE + 1);
 
 // Complex signals: I on [31:16], Q on [15:0]
-wire [31:0] c0_tdata,  c1_tdata,  c2_tdata,  c3_tdata,             c5_tdata,  c6_tdata,  c7_tdata;
-wire [63:0]                                             c4_tdata;
+wire [31:0] c0_tdata,  c1_tdata,  c2_tdata,  c3_tdata,                        c6_tdata,  c7_tdata;
+wire [63:0]                                             c4_tdata,  c5_tdata;
 wire        c0_tlast,  c1_tlast,  c2_tlast,  c3_tlast,  c4_tlast,  c5_tlast,  c6_tlast,  c7_tlast;   
 wire        c0_tvalid, c1_tvalid, c2_tvalid, c3_tvalid, c4_tvalid, c5_tvalid, c6_tvalid, c7_tvalid;
 wire        c0_tready, c1_tready, c2_tready, c3_tready, c4_tready, c5_tready, c6_tready, c7_tready;
@@ -111,43 +111,49 @@ cmul cmul0 (
   .o_tdata(c4_tdata), .o_tlast(c4_tlast), .o_tvalid(c4_tvalid), .o_tready(c4_tready)
 );
 
-// Truncate the output stream to 16 bits
-assign c5_tdata[31:16] = c4_tdata[63:48]; // keep only the 16 MSB
-assign c5_tdata[15:0]  = c4_tdata[31:16];  // keep only the 16 LSB
-assign c5_tlast = c4_tlast;
-assign c5_tvalid = c4_tvalid;
-assign c4_tready = c5_tready;
 
 /*
  * Calculate the moving sum of the product stream over a window of HALF_FFT_SIZE samples
  * CAUTION: we need 2 moving sums, one for the real part and one for the imaginary part
  * Out = sum(In)
  *
- * In:  c5 (c4 clipped to 16 bits) -- t0
- * Out: c6 (c6_unscalled 16 MSB)   -- t0
+ * In:  c4 (c4 clipped to 16 bits) -- t0
+ * Out: c5 (c5_unscalled 16 MSB)   -- t0
  */
-wire [16+$clog2(HALF_FFT_SIZE+1)-1:0] c6_i_unscaled, c6_q_unscaled;
-assign c6_tdata = {c6_i_unscaled[16+$clog2(HALF_FFT_SIZE+1)-1:$clog2(HALF_FFT_SIZE+1)],  // keep only the 16 MSB
-                   c6_q_unscaled[16+$clog2(HALF_FFT_SIZE+1)-1:$clog2(HALF_FFT_SIZE+1)]};
+wire [32+$clog2(HALF_FFT_SIZE+1)-1:0] c5_i_unscaled, c5_q_unscaled;
+assign c5_tdata = {c5_i_unscaled[32+$clog2(HALF_FFT_SIZE+1)-1:$clog2(HALF_FFT_SIZE+1)],  // keep only the 32 MSB
+                   c5_q_unscaled[32+$clog2(HALF_FFT_SIZE+1)-1:$clog2(HALF_FFT_SIZE+1)]};
 moving_sum #(
-  .WIDTH(16),
+  .WIDTH(32),
   .MAX_LEN(HALF_FFT_SIZE)
 ) sum0 (
   .clk(clk), .reset(reset), .clear(clear),
   .len(HALF_FFT_SIZE[HALF_FFT_SIZE_WIDTH-1:0]),
-  .i_tdata(c5_tdata[31:16]), .i_tlast(c5_tlast), .i_tvalid(c5_tvalid), .i_tready(c5_tready),
-  .o_tdata(c6_i_unscaled),   .o_tlast(c6_tlast), .o_tvalid(c6_tvalid), .o_tready(c6_tready)
+  .i_tdata(c4_tdata[63:32]), .i_tlast(c4_tlast), .i_tvalid(c4_tvalid), .i_tready(c4_tready),
+  .o_tdata(c5_i_unscaled),   .o_tlast(c5_tlast), .o_tvalid(c5_tvalid), .o_tready(c5_tready)
 );
 
 moving_sum #(
-  .WIDTH(16),
+  .WIDTH(32),
   .MAX_LEN(HALF_FFT_SIZE)
 ) sum1 (
   .clk(clk), .reset(reset), .clear(clear),
   .len(HALF_FFT_SIZE[HALF_FFT_SIZE_WIDTH-1:0]),
-  .i_tdata(c5_tdata[15:0]), .i_tlast(c5_tlast), .i_tvalid(c5_tvalid), .i_tready(),          // c5_tready is set by sum0
-  .o_tdata(c6_q_unscaled),  .o_tlast(),         .o_tvalid(),          .o_tready(c6_tready)  // c6_tlast & nf_tvalid are set by sum0
+  .i_tdata(c4_tdata[31:0]), .i_tlast(c4_tlast), .i_tvalid(c4_tvalid), .i_tready(),          // c4_tready is set by sum0
+  .o_tdata(c5_q_unscaled),  .o_tlast(),         .o_tvalid(),          .o_tready(c5_tready)  // c5_tlast & nf_tvalid are set by sum0
 );
+
+
+// Clip the output stream to 16 bits
+axi_clip_complex #( 
+  .WIDTH_IN(32),
+  .WIDTH_OUT(16)
+) clip0 (
+  .clk(clk), .reset(reset),
+  .i_tdata(c5_tdata), .i_tlast(c5_tlast), .i_tvalid(c5_tvalid), .i_tready(c5_tready),
+  .o_tdata(c6_tdata), .o_tlast(c6_tlast), .o_tvalid(c6_tvalid), .o_tready(c6_tready)
+);
+
 
 // P(d) complex signal is in c6_tdata
 
