@@ -29,10 +29,11 @@ wire        c0_tvalid, c1_tvalid, c2_tvalid, c3_tvalid, c4_tvalid, c5_tvalid, c6
 wire        c0_tready, c1_tready, c2_tready, c3_tready, c4_tready, c5_tready, c6_tready, c7_tready;
 
 // Real signals
-wire [31:0] r8_tdata,  r9_tdata,  r10_tdata,  r11_tdata,  r12_tdata;
-wire        r8_tlast,  r9_tlast,  r10_tlast,  r11_tlast,  r12_tlast;
-wire        r8_tvalid, r9_tvalid, r10_tvalid, r11_tvalid, r12_tvalid;
-wire        r8_tready, r9_tready, r10_tready, r11_tready, r12_tready;
+wire signed [31:0] r8_tdata,             r10_tdata,  r11_tdata,  r12_tdata;
+wire signed [15:0]            r9_tdata;
+wire               r8_tlast,  r9_tlast,  r10_tlast,  r11_tlast,  r12_tlast;
+wire               r8_tvalid, r9_tvalid, r10_tvalid, r11_tvalid, r12_tvalid;
+wire               r8_tready, r9_tready, r10_tready, r11_tready, r12_tready;
 
 
 
@@ -182,7 +183,7 @@ complex_to_magsq #(
  * Out: r9_unscaled -- t0
  */
 wire [32+$clog2(HALF_FFT_SIZE+1)-1:0] r9_unscaled;
-assign r9_tdata = {r9_unscaled[32+$clog2(HALF_FFT_SIZE+1)-1:$clog2(HALF_FFT_SIZE+1)]};  // keep only the 32 MSB
+assign r9_tdata = r9_unscaled[32+$clog2(HALF_FFT_SIZE+1)-1:32+$clog2(HALF_FFT_SIZE+1)-16];
 moving_sum #(
   .WIDTH(32),
   .MAX_LEN(HALF_FFT_SIZE)
@@ -225,8 +226,6 @@ complex_to_magsq #(
  * 
  * Note: this block has a latency of 3 cycles
  */
-wire [15:0] r9_scaled;
-assign r9_scaled = r9_tdata >> 16;  // scale the 32-bit signal to 16 bits
 mult #(
   .WIDTH_A(16),
   .WIDTH_B(16),
@@ -234,8 +233,8 @@ mult #(
   .LATENCY(3)
 ) mult0 (
   .clk(clk), .reset(reset),
-  .a_tdata(r9_scaled), .a_tlast(r9_tlast),  .a_tvalid(r9_tvalid),  .a_tready(r9_tready),
-  .b_tdata(r9_scaled), .b_tlast(r9_tlast),  .b_tvalid(r9_tvalid),  .b_tready(r9_tready),
+  .a_tdata(r9_tdata), .a_tlast(r9_tlast),  .a_tvalid(r9_tvalid),  .a_tready(r9_tready),
+  .b_tdata(r9_tdata), .b_tlast(r9_tlast),  .b_tvalid(r9_tvalid),  .b_tready(r9_tready),
   .p_tdata(r11_tdata), .p_tlast(r11_tlast), .p_tvalid(r11_tvalid), .p_tready(r11_tready)
 );
 
@@ -249,33 +248,33 @@ mult #(
  * Out: r12 (= r10 / r11) -- t0
  *
  * Note: use of the divide_int32 in-tree Xilinx IP core
- * Note: We need to buffer the input streams to avoid deadlocks
+ * Note: We need to buffer the input streams to avoid deadlocks (axi_fifo seems to be buggy)
  */
-wire [31:0] r10_buffered_tdata;
-wire        r10_buffered_tlast, r10_buffered_tvalid, r10_buffered_tready;
-axi_fifo #(
-  .WIDTH(33),
-  .SIZE(4 + 3)  // 4 samples + 3 samples of latency => compensate for the latency of the mult block
+wire signed [31:0] r10_buffered_tdata;
+wire               r10_buffered_tlast, r10_buffered_tvalid, r10_buffered_tready;
+axi_fifo_short #(
+  .WIDTH(33)
+  //.SIZE(4 + 3)  // 4 samples + 3 samples of latency => compensate for the latency of the mult block
 ) buffer0 (
   .clk(clk), .reset(reset), .clear(clear),
   .i_tdata({r10_tlast, r10_tdata}), .i_tvalid(r10_tvalid), .i_tready(r10_tready),
   .o_tdata({r10_buffered_tlast, r10_buffered_tdata}), .o_tvalid(r10_buffered_tvalid), .o_tready(r10_buffered_tready)
 );
 
-wire [31:0] r11_buffered_tdata;
-wire        r11_buffered_tlast, r11_buffered_tvalid, r11_buffered_tready;
-axi_fifo #(
-  .WIDTH(33),
-  .SIZE(4)
+wire signed [31:0] r11_buffered_tdata;
+wire               r11_buffered_tlast, r11_buffered_tvalid, r11_buffered_tready;
+axi_fifo_short #(
+  .WIDTH(33)
+  //.SIZE(4)
 ) buffer1 (
   .clk(clk), .reset(reset), .clear(clear),
   .i_tdata({r11_tlast, r11_tdata}), .i_tvalid(r11_tvalid), .i_tready(r11_tready),
   .o_tdata({r11_buffered_tlast, r11_buffered_tdata}), .o_tvalid(r11_buffered_tvalid), .o_tready(r11_buffered_tready)
 );
 
-wire [63:0] r12_unscaled;
+wire signed [63:0] r12_unscaled;
 assign r12_tdata = r12_unscaled[63:32];  // keep only the 32 MSB (quotient), discard the 32 LSB (fractional)
-wire [31:0] r11_buffered_safe_divisor;
+wire signed [31:0] r11_buffered_safe_divisor;
 assign r11_buffered_safe_divisor = (r11_buffered_tdata == 0) ? 1 : r11_buffered_tdata;  // avoid division by zero
 divide_int32 divide0 (
   .aclk(clk), .aresetn(~reset),
@@ -287,6 +286,8 @@ divide_int32 divide0 (
   .m_axis_dout_tvalid(r12_tvalid),                  .m_axis_dout_tready(r12_tready),
   .m_axis_dout_tuser()
 );
+
+// M(d) real signal is in r12_tdata
 
 
 // Connect the output stream to the output port
