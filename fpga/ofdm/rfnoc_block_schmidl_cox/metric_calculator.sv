@@ -11,7 +11,8 @@
  * bits.
  */
 module metric_caclulator #(
-    parameter int FFT_SIZE = 1024
+    parameter int FFT_SIZE = 1024,
+    parameter int CP_SIZE = 128
 )(
     input clk, input reset, input clear,
     input [31:0] i_tdata, input i_tlast, input i_tvalid, output i_tready,   // Payload input stream
@@ -20,20 +21,21 @@ module metric_caclulator #(
 
 localparam HALF_FFT_SIZE = FFT_SIZE / 2;
 localparam HALF_FFT_SIZE_WIDTH = $clog2(HALF_FFT_SIZE + 1);
+localparam CP_SIZE_WIDTH = $clog2(CP_SIZE + 1);
 
 // Complex signals: I on [31:16], Q on [15:0]
-wire [31:0] c0_tdata,  c1_tdata,  c2_tdata,  c3_tdata,                        c6_tdata,  c7_tdata;
+wire [31:0] c0_tdata,  c1_tdata,  c2_tdata,  c3_tdata,                        c6_tdata,  c7_tdata,  c8_tdata,  c9_tdata,  c10_tdata;
 wire [63:0]                                             c4_tdata,  c5_tdata;
-wire        c0_tlast,  c1_tlast,  c2_tlast,  c3_tlast,  c4_tlast,  c5_tlast,  c6_tlast,  c7_tlast;   
-wire        c0_tvalid, c1_tvalid, c2_tvalid, c3_tvalid, c4_tvalid, c5_tvalid, c6_tvalid, c7_tvalid;
-wire        c0_tready, c1_tready, c2_tready, c3_tready, c4_tready, c5_tready, c6_tready, c7_tready;
+wire        c0_tlast,  c1_tlast,  c2_tlast,  c3_tlast,  c4_tlast,  c5_tlast,  c6_tlast,  c7_tlast,  c8_tlast,  c9_tlast,  c10_tlast;
+wire        c0_tvalid, c1_tvalid, c2_tvalid, c3_tvalid, c4_tvalid, c5_tvalid, c6_tvalid, c7_tvalid, c8_tvalid, c9_tvalid, c10_tvalid;
+wire        c0_tready, c1_tready, c2_tready, c3_tready, c4_tready, c5_tready, c6_tready, c7_tready, c8_tready, c9_tready, c10_tready;
 
 // Real signals
-wire signed [31:0] r8_tdata,             r10_tdata,  r11_tdata,  r12_tdata;
+wire signed [31:0] r8_tdata,             r10_tdata,  r11_tdata,  r12_tdata,  r13_tdata;
 wire signed [15:0]            r9_tdata;
-wire               r8_tlast,  r9_tlast,  r10_tlast,  r11_tlast,  r12_tlast;
-wire               r8_tvalid, r9_tvalid, r10_tvalid, r11_tvalid, r12_tvalid;
-wire               r8_tready, r9_tready, r10_tready, r11_tready, r12_tready;
+wire               r8_tlast,  r9_tlast,  r10_tlast,  r11_tlast,  r12_tlast,  r13_tlast;
+wire               r8_tvalid, r9_tvalid, r10_tvalid, r11_tvalid, r12_tvalid, r13_tvalid;
+wire               r8_tready, r9_tready, r10_tready, r11_tready, r12_tready, r13_tready;
 
 
 
@@ -80,6 +82,17 @@ delay_fifo #(
   .o_tdata(c2_tdata), .o_tlast(c2_tlast), .o_tvalid(c2_tvalid), .o_tready(c2_tready)
 );
 
+split_stream_fifo #(
+  .WIDTH(32),
+  .ACTIVE_MASK(4'b0011)
+) spliter1 (
+  .clk(clk), .reset(reset), .clear(clear),
+  .i_tdata(c2_tdata),   .i_tlast(c2_tlast),  .i_tvalid(c2_tvalid),   .i_tready(c2_tready),
+  .o0_tdata(c8_tdata),  .o0_tlast(c8_tlast), .o0_tvalid(c8_tvalid), .o0_tready(c8_tready),
+  .o1_tdata(c9_tdata),  .o1_tlast(c9_tlast), .o1_tvalid(c9_tvalid), .o1_tready(c9_tready),
+  .o2_tready(1'b0), .o3_tready(1'b0)
+);
+
 
 /*
  * Conjugate the delayed stream
@@ -92,7 +105,7 @@ conj #(
   .WIDTH(16)
 ) conj0 (
   .clk(clk), .reset(reset), .clear(clear),
-  .i_tdata(c2_tdata), .i_tlast(c2_tlast), .i_tvalid(c2_tvalid), .i_tready(c2_tready),
+  .i_tdata(c8_tdata), .i_tlast(c8_tlast), .i_tvalid(c8_tvalid), .i_tready(c8_tready),
   .o_tdata(c3_tdata), .o_tlast(c3_tlast), .o_tvalid(c3_tvalid), .o_tready(c3_tready)
 );
 
@@ -288,12 +301,50 @@ divide_int32 divide0 (
 );
 
 // M(d) real signal is in r12_tdata
+// r[d-L] is hold in c9_tdata
 
+
+
+/****************************
+ * Mooving average on M(d)  *
+ ****************************/
+/*
+ * Calculate the moving average of the M(d) signal over a window of CP samples
+ * Out = sum(In)
+ *
+ * In:  r12          -- t0
+ * Out: r13_unscaled -- t0
+ */
+
+wire [32+$clog2(CP_SIZE+1)-1:0] r13_unscaled;
+// assign r13_tdata = r13_unscaled[32+$clog2(CP_SIZE+1)-1:$clog2(CP_SIZE+1)]; // keep only the 32 MSB
+assign r13_tdata = r13_unscaled[32-1:0];  // keep only the 32 LSB
+moving_sum #(
+  .WIDTH(32),
+  .MAX_LEN(CP_SIZE)
+) sum3 (
+  .clk(clk), .reset(reset), .clear(clear),
+  .len(CP_SIZE[CP_SIZE_WIDTH-1:0]),
+  .i_tdata(r12_tdata),    .i_tlast(r12_tlast), .i_tvalid(r12_tvalid), .i_tready(r12_tready),
+  .o_tdata(r13_unscaled), .o_tlast(r13_tlast), .o_tvalid(r13_tvalid), .o_tready(r13_tready)
+);
+
+detector #(
+  .HALF_FFT_SIZE(HALF_FFT_SIZE),
+  .HALPH_CP_SIZE(CP_SIZE / 2)
+) detector0 (
+  .clk(clk), .reset(reset), .clear(clear),
+  .threshold(32'h00000200),  // TODO: set the threshold dynamically
+  .packet_length(32'd2304),  // TODO: set the packet length dynamically
+  .m_tdata(r13_tdata), .m_tlast(r13_tlast), .m_tvalid(r13_tvalid), .m_tready(r13_tready), // Metric input
+  .i_tdata(c9_tdata),  .i_tlast(c9_tlast),  .i_tvalid(c9_tvalid),  .i_tready(c9_tready),  // Input signal
+  .o_tdata(c10_tdata), .o_tlast(c10_tlast), .o_tvalid(c10_tvalid), .o_tready(c10_tready)  // Output signal
+);
 
 // Connect the output stream to the output port
-assign o_tdata  = r12_tdata;
-assign o_tlast  = r12_tlast;
-assign o_tvalid = r12_tvalid;
-assign r12_tready = o_tready;
+assign o_tdata  = c10_tdata;
+assign o_tlast  = c10_tlast;
+assign o_tvalid = c10_tvalid;
+assign c10_tready = o_tready;
 
 endmodule // metric_calculator

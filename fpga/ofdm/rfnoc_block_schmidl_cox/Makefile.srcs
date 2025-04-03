@@ -20,4 +20,5 @@ RFNOC_BLOCK_SCHMIDL_COX_SRCS := $(addprefix $(dir $(abspath $(lastword $(MAKEFIL
 rfnoc_block_schmidl_cox.sv \
 noc_shell_schmidl_cox.sv \
 metric_calculator.sv \
+detector.sv \
 )
