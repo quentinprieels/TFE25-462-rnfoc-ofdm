@@ -15,6 +15,7 @@ module metric_caclulator #(
     parameter int CP_SIZE = 128
 )(
     input clk, input reset, input clear,
+    input [31:0] threshold, input [31:0] packet_length,  // Threshold for detection and length of the packet
     input [31:0] i_tdata, input i_tlast, input i_tvalid, output i_tready,   // Payload input stream
     output [31:0] o_tdata, output o_tlast, output o_tvalid, input o_tready  // Payload output stream
 );
@@ -31,8 +32,9 @@ wire        c0_tvalid, c1_tvalid, c2_tvalid, c3_tvalid, c4_tvalid, c5_tvalid, c6
 wire        c0_tready, c1_tready, c2_tready, c3_tready, c4_tready, c5_tready, c6_tready, c7_tready, c8_tready, c9_tready, c10_tready;
 
 // Real signals
-wire signed [31:0] r8_tdata,             r10_tdata,  r11_tdata,  r12_tdata,  r13_tdata;
+wire signed [31:0] r8_tdata,             r10_tdata,  r11_tdata,  r12_tdata;
 wire signed [15:0]            r9_tdata;
+wire signed [32+$clog2(CP_SIZE+1)-1:0]                                       r13_tdata;
 wire               r8_tlast,  r9_tlast,  r10_tlast,  r11_tlast,  r12_tlast,  r13_tlast;
 wire               r8_tvalid, r9_tvalid, r10_tvalid, r11_tvalid, r12_tvalid, r13_tvalid;
 wire               r8_tready, r9_tready, r10_tready, r11_tready, r12_tready, r13_tready;
@@ -120,8 +122,8 @@ conj #(
  */
 cmul cmul0 (
   .clk(clk), .reset(reset),
-  .a_tdata(c1_tdata),    .a_tlast(c1_tlast), .a_tvalid(c1_tvalid), .a_tready(c1_tready),
-  .b_tdata(c3_tdata),    .b_tlast(c3_tlast), .b_tvalid(c3_tvalid), .b_tready(c3_tready),
+  .a_tdata(c1_tdata), .a_tlast(c1_tlast), .a_tvalid(c1_tvalid), .a_tready(c1_tready),
+  .b_tdata(c3_tdata), .b_tlast(c3_tlast), .b_tvalid(c3_tvalid), .b_tready(c3_tready),
   .o_tdata(c4_tdata), .o_tlast(c4_tlast), .o_tvalid(c4_tvalid), .o_tready(c4_tready)
 );
 
@@ -159,8 +161,8 @@ moving_sum #(
 
 
 // Truncate the output stream to 16 bits
-assign c6_tdata[31:16] = c5_tdata[63:48];  // keep only the 16 MSB
-assign c6_tdata[15:0]  = c5_tdata[31:16];  // keep only the 16 LSB
+assign c6_tdata[31:16] = c5_i_unscaled[32+$clog2(HALF_FFT_SIZE+1)-1:32+$clog2(HALF_FFT_SIZE+1)-16];  // keep only the 16 MSB
+assign c6_tdata[15:0]  = c5_q_unscaled[32+$clog2(HALF_FFT_SIZE+1)-1:32+$clog2(HALF_FFT_SIZE+1)-16];  // keep only the 16 MSB
 assign c6_tlast = c5_tlast;
 assign c6_tvalid = c5_tvalid;
 assign c5_tready = c6_tready;
@@ -270,7 +272,7 @@ axi_fifo_short #(
   //.SIZE(4 + 3)  // 4 samples + 3 samples of latency => compensate for the latency of the mult block
 ) buffer0 (
   .clk(clk), .reset(reset), .clear(clear),
-  .i_tdata({r10_tlast, r10_tdata}), .i_tvalid(r10_tvalid), .i_tready(r10_tready),
+  .i_tdata({r10_tlast, r10_tdata << 16}), .i_tvalid(r10_tvalid), .i_tready(r10_tready),
   .o_tdata({r10_buffered_tlast, r10_buffered_tdata}), .o_tvalid(r10_buffered_tvalid), .o_tready(r10_buffered_tready)
 );
 
@@ -315,10 +317,6 @@ divide_int32 divide0 (
  * In:  r12          -- t0
  * Out: r13_unscaled -- t0
  */
-
-wire [32+$clog2(CP_SIZE+1)-1:0] r13_unscaled;
-// assign r13_tdata = r13_unscaled[32+$clog2(CP_SIZE+1)-1:$clog2(CP_SIZE+1)]; // keep only the 32 MSB
-assign r13_tdata = r13_unscaled[32-1:0];  // keep only the 32 LSB
 moving_sum #(
   .WIDTH(32),
   .MAX_LEN(CP_SIZE)
@@ -326,16 +324,17 @@ moving_sum #(
   .clk(clk), .reset(reset), .clear(clear),
   .len(CP_SIZE[CP_SIZE_WIDTH-1:0]),
   .i_tdata(r12_tdata),    .i_tlast(r12_tlast), .i_tvalid(r12_tvalid), .i_tready(r12_tready),
-  .o_tdata(r13_unscaled), .o_tlast(r13_tlast), .o_tvalid(r13_tvalid), .o_tready(r13_tready)
+  .o_tdata(r13_tdata), .o_tlast(r13_tlast), .o_tvalid(r13_tvalid), .o_tready(r13_tready)
 );
 
 detector #(
   .HALF_FFT_SIZE(HALF_FFT_SIZE),
-  .HALPH_CP_SIZE(CP_SIZE / 2)
+  .HALPH_CP_SIZE(CP_SIZE / 2),
+  .M_TDATA_WIDTH(32+$clog2(CP_SIZE+1))
 ) detector0 (
   .clk(clk), .reset(reset), .clear(clear),
-  .threshold(32'h00000200),  // TODO: set the threshold dynamically
-  .packet_length(32'd2304),  // TODO: set the packet length dynamically
+  .threshold(threshold),
+  .packet_length(packet_length),
   .m_tdata(r13_tdata), .m_tlast(r13_tlast), .m_tvalid(r13_tvalid), .m_tready(r13_tready), // Metric input
   .i_tdata(c9_tdata),  .i_tlast(c9_tlast),  .i_tvalid(c9_tvalid),  .i_tready(c9_tready),  // Input signal
   .o_tdata(c10_tdata), .o_tlast(c10_tlast), .o_tvalid(c10_tvalid), .o_tready(c10_tready)  // Output signal

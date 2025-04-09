@@ -150,6 +150,9 @@ module rfnoc_block_schmidl_cox_tb;
   // Main Test Process
   //---------------------------------------------------------------------------
 
+  localparam int REG_PACKET_SIZE_ADDR = dut.REG_PACKET_SIZE_ADDR;
+  localparam int REG_THRESHOLD_ADDR   = dut.REG_THRESHOLD_ADDR;
+
   initial begin : tb_main
     // Dump VCD file for waveform debugging
     $dumpfile("rfnoc_block_schmidl_cox_tb.vcd");
@@ -181,7 +184,43 @@ module rfnoc_block_schmidl_cox_tb;
     test.end_test();
 
     //--------------------------------
-    // Test Sequences
+    // Test Configuration
+    //--------------------------------
+    begin
+      // Read an write the packet_length register and the threshold register
+      logic [31:0] packet_length, threshold;
+      test.start_test("Read and write registers", 2us);
+      
+      blk_ctrl.reg_read(REG_PACKET_SIZE_ADDR, packet_length);
+      blk_ctrl.reg_read(REG_THRESHOLD_ADDR, threshold);
+      `ASSERT_ERROR(
+        packet_length == dut.REG_PACKET_SIZE_DEFAULT, "Incorrect default packet_length register value"
+      );
+      `ASSERT_ERROR(
+        threshold == dut.REG_THRESHOLD_DEFAULT, "Incorrect default threshold register value"
+      );
+
+      // Write new values to the registers
+      packet_length = 1024;
+      threshold = 100;
+      blk_ctrl.reg_write(REG_PACKET_SIZE_ADDR, packet_length);
+      blk_ctrl.reg_write(REG_THRESHOLD_ADDR, threshold);
+
+      // Read back the values to verify
+      blk_ctrl.reg_read(REG_PACKET_SIZE_ADDR, packet_length);
+      blk_ctrl.reg_read(REG_THRESHOLD_ADDR, threshold);
+      `ASSERT_ERROR(
+        packet_length == 1024, "Incorrect packet_length register value after write"
+      );
+      `ASSERT_ERROR(
+        threshold == 100, "Incorrect threshold register value after write"
+      );
+
+      test.end_test();
+    end
+
+    //--------------------------------
+    // Test Detection
     //--------------------------------
 
     // Send file to block
@@ -195,6 +234,10 @@ module rfnoc_block_schmidl_cox_tb;
       bit end_of_file;
 
       test.start_test("Reading IQ samples from file and processing", 250us);
+
+      // Configure the block
+      blk_ctrl.reg_write(REG_PACKET_SIZE_ADDR, 32'd2304);
+      blk_ctrl.reg_write(REG_THRESHOLD_ADDR, 32'h02000000);
       
       // File containing IQ samples
       input_filename = "/export/home/usrpconfig/Documents/GitHub/TFE25-462/rfnoc-ofdm/tests/signal_K1024_CP128_CPp128_M1_N1_preambleBPSK_payloadQPSK_usrp_recv.txt";

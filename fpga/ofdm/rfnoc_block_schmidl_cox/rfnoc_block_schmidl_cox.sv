@@ -67,8 +67,8 @@ module rfnoc_block_schmidl_cox #(
   wire               m_ctrlport_req_rd;
   wire [19:0]        m_ctrlport_req_addr;
   wire [31:0]        m_ctrlport_req_data;
-  wire               m_ctrlport_resp_ack;
-  wire [31:0]        m_ctrlport_resp_data;
+  reg                m_ctrlport_resp_ack;
+  reg  [31:0]        m_ctrlport_resp_data;
   // Payload Stream to User Logic: in
   wire [32*1-1:0]    m_in_payload_tdata;
   wire [1-1:0]       m_in_payload_tkeep;
@@ -190,11 +190,64 @@ module rfnoc_block_schmidl_cox #(
   // User Logic
   //---------------------------------------------------------------------------
 
-    // Instanciate another module
+  //-------------------------------------
+  // Registers
+  //-------------------------------------
+  localparam REG_THRESHOLD_ADDR = 0;
+  localparam REG_PACKET_SIZE_ADDR = 1;
+  localparam logic [31:0] REG_THRESHOLD_DEFAULT = 32'h02000000;
+  localparam logic [31:0] REG_PACKET_SIZE_DEFAULT = 32'd2304;
+
+  reg [31:0] threshold = REG_THRESHOLD_DEFAULT;
+  reg [31:0] packet_size = REG_PACKET_SIZE_DEFAULT;
+
+  always @(posedge ctrlport_clk) begin
+    if (ctrlport_rst) begin
+      threshold <= REG_THRESHOLD_DEFAULT;
+      packet_size <= REG_PACKET_SIZE_DEFAULT;
+    end else begin
+      // Default assignment
+      m_ctrlport_resp_ack <= 0;
+
+      // Handle read requests      
+      if (m_ctrlport_req_rd) begin
+        case (m_ctrlport_req_addr)
+          REG_THRESHOLD_ADDR: begin
+            m_ctrlport_resp_data <= threshold;
+            m_ctrlport_resp_ack <= 1;
+          end
+          REG_PACKET_SIZE_ADDR: begin
+            m_ctrlport_resp_data <= packet_size;
+            m_ctrlport_resp_ack <= 1;
+          end
+        endcase
+      end
+
+      // Handle write requests
+      if (m_ctrlport_req_wr) begin
+        case (m_ctrlport_req_addr)
+          REG_THRESHOLD_ADDR: begin
+            threshold <= m_ctrlport_req_data;
+            m_ctrlport_resp_ack <= 1;
+          end
+          REG_PACKET_SIZE_ADDR: begin
+            packet_size <= m_ctrlport_req_data;
+            m_ctrlport_resp_ack <= 1;
+          end
+        endcase
+      end
+    end
+  end
+
+  //-------------------------------------
+  // Signal Processing
+  //-------------------------------------
   metric_caclulator mc0 (
     .clk(axis_data_clk),
     .reset(axis_data_rst),  // Used to reset the module on device startup
     .clear(1'b0),           // Used to reset only internal states of the module (not software defined registers)
+    .threshold(threshold),  // Threshold for detection
+    .packet_length(packet_size), // Length of the packet
     .i_tdata(m_in_payload_tdata),
     .i_tlast(m_in_payload_tlast),
     .i_tvalid(m_in_payload_tvalid),
@@ -204,9 +257,6 @@ module rfnoc_block_schmidl_cox #(
     .o_tvalid(s_out_payload_tvalid),
     .o_tready(s_out_payload_tready)
   );
-
-  // Set control to default value
-  assign m_ctrlport_resp_ack = 1'b0;
 
   // Dive data control signal unchanged
   assign s_out_context_tdata  = m_in_context_tdata;
