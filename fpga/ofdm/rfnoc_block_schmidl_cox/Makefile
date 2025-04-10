@@ -27,6 +27,7 @@ include $(LIB_IP_DIR)/divide_int32/Makefile.inc
 
 # Include makefiles and sources for the DUT and its
 # dependencies.
+include $(BASE_DIR)/../lib/rfnoc/Makefile.srcs
 include $(BASE_DIR)/../lib/rfnoc/core/Makefile.srcs
 include $(BASE_DIR)/../lib/rfnoc/utils/Makefile.srcs
 include Makefile.srcs

@@ -42,3 +42,11 @@ data:
       context_fifo_depth: 2
       payload_fifo_depth: 2
       format: sc32
+
+fpga_includes:
+    # This path is the exact path to the relevant Makefile.srcs in this repository.
+    # After installation, the whole directory will become available under a
+    # similar path, also in the include directories of the image builder.
+  - include: "fpga/ofdm/rfnoc_block_schmidl_cox/Makefile.srcs"
+    # This make variable has to match the one in the file referenced above.
+    make_var: "$(RFNOC_BLOCK_SCHMIDL_COX_SRCS)"

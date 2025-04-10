@@ -258,6 +258,9 @@ module rfnoc_block_schmidl_cox #(
     .o_tready(s_out_payload_tready)
   );
 
+  // Only 1-sample per clock, so tkeep should always be asserted
+  assign s_out_payload_tkeep = 1'b1;
+
   // Dive data control signal unchanged
   assign s_out_context_tdata  = m_in_context_tdata;
   assign s_out_context_tuser  = m_in_context_tuser;

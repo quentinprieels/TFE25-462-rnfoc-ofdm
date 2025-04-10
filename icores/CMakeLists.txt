@@ -5,4 +5,4 @@
 #
 
 # Add one line for every image core here:
-#RFNOC_REGISTER_IMAGE_CORE(SRC my_image_core)
+RFNOC_REGISTER_IMAGE_CORE(SRC x310_rfnoc_image_core.yml)
