@@ -23,5 +23,6 @@ metric_calculator.sv \
 symbol_autocorrelator.sv \
 complex_trunc.sv \
 axi_shift_registers.sv \
+symbol_energy.sv \
 detector.sv \
 )

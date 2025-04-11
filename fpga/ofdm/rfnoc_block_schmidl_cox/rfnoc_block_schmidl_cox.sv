@@ -242,16 +242,62 @@ module rfnoc_block_schmidl_cox #(
   //-------------------------------------
   // Signal Processing
   //-------------------------------------
-  metric_caclulator mc0 (
+  localparam int FFT_SIZE = 1024;
+  localparam int CP_SIZE = 128;
+
+  wire [32+$clog2(CP_SIZE+1)-1:0] m_tdata;
+  wire m_tlast, m_tvalid, m_tready;
+  wire [31:0] yl_tdata;
+  wire yl_tlast, yl_tvalid, yl_tready;
+  metric_calculator # (
+    .FFT_SIZE(FFT_SIZE),
+    .CP_SIZE(CP_SIZE)  
+  ) mc0 (
     .clk(axis_data_clk),
     .reset(axis_data_rst),  // Used to reset the module on device startup
     .clear(1'b0),           // Used to reset only internal states of the module (not software defined registers)
-    .threshold(threshold),  // Threshold for detection
-    .packet_length(packet_size), // Length of the packet
+
     .i_tdata(m_in_payload_tdata),
     .i_tlast(m_in_payload_tlast),
     .i_tvalid(m_in_payload_tvalid),
     .i_tready(m_in_payload_tready),
+
+    .m_tdata(m_tdata),
+    .m_tlast(m_tlast),
+    .m_tvalid(m_tvalid),
+    .m_tready(s_out_payload_tready),
+
+    .o_tdata(yl_tdata),
+    .o_tlast(yl_tlast),
+    .o_tvalid(yl_tvalid),
+    .o_tready(s_out_payload_tready)
+  );
+
+  detector #(
+    .HALF_FFT_SIZE(FFT_SIZE / 2),
+    .HALPH_CP_SIZE(CP_SIZE / 2),
+    .M_TDATA_WIDTH(32+$clog2(CP_SIZE+1))
+  ) detector0 (
+    .clk(axis_data_clk),
+    .reset(axis_data_rst),
+    .clear(1'b0),
+
+    .threshold(threshold),
+    .packet_length(packet_size),
+
+    // Metric input
+    .m_tdata(m_tdata),
+    .m_tlast(m_tlast), 
+    .m_tvalid(m_tvalid),
+    .m_tready(m_tready),
+
+    // Input signal
+    .i_tdata(yl_tdata),
+    .i_tlast(yl_tlast),
+    .i_tvalid(yl_tvalid),
+    .i_tready(yl_tready),
+
+    // Output signal
     .o_tdata(s_out_payload_tdata),
     .o_tlast(s_out_payload_tlast),
     .o_tvalid(s_out_payload_tvalid),

@@ -4,12 +4,29 @@ module detector #(
   parameter int M_TDATA_WIDTH = 32
 ) 
 (
-  input clk, input reset, input clear,
-  input [31:0] threshold,                                                               // Threshold for detection
-  input [31:0] packet_length,                                                           // Length of the packet
-  input [M_TDATA_WIDTH-1:0] m_tdata, input m_tlast, input m_tvalid, output m_tready,    // Metric input
-  input [31:0] i_tdata, input i_tlast, input i_tvalid, output i_tready,                 // Input signal
-  output [31:0] o_tdata, output o_tlast, output o_tvalid, input o_tready                // Output signal
+  input clk,
+  input reset, 
+  input clear,
+
+  input [31:0] threshold, // Threshold for detection
+  input [31:0] packet_length, // Length of the packet
+
+  // Metric input
+  input [M_TDATA_WIDTH-1:0] m_tdata, 
+  input m_tlast, 
+  input m_tvalid, 
+  output m_tready,
+
+  // Input and output signals
+  input [31:0] i_tdata,
+  input i_tlast,
+  input i_tvalid,
+  output i_tready,
+
+  output [31:0] o_tdata,
+  output o_tlast,
+  output o_tvalid,
+  input o_tready
 );
 
 // Number of samples after the peak to be at CP/2 of the 1st OFDM symbol

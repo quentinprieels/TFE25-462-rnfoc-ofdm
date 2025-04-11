@@ -10,7 +10,7 @@
 // Both outputs are delayed during the processing to ensure synchronization.
 //
 // Caracters:
-// --> 8 samples delay
+// --> 10 samples delay
 // --> 16 bits per component
 // --> truncated from 42 bits/component to 16 bits/component
 //
