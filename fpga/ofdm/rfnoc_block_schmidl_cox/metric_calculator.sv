@@ -159,6 +159,37 @@ complex_to_magsq #(
 
 
 // Compute |R(d)|^2
+wire [31:0] r_cpy0_tdata, r_cpy1_tdata; // 1 cycle latency
+wire r_cpy0_tlast, r_cpy1_tlast;
+wire r_cpy0_tvalid, r_cpy1_tvalid;
+wire r_cpy0_tready, r_cpy1_tready;
+split_stream_fifo #(
+    .WIDTH(32),
+    .ACTIVE_MASK(4'b0011)
+) r_splitter (
+    .clk(clk),
+    .reset(reset),
+    .clear(clear),
+
+    .i_tdata(r_tdata),
+    .i_tlast(r_tlast),
+    .i_tvalid(r_tvalid),
+    .i_tready(r_tready),
+
+    .o0_tdata(r_cpy0_tdata),
+    .o0_tlast(r_cpy0_tlast),
+    .o0_tvalid(r_cpy0_tvalid),  
+    .o0_tready(r_cpy0_tready),
+
+    .o1_tdata(r_cpy1_tdata),
+    .o1_tlast(r_cpy1_tlast),
+    .o1_tvalid(r_cpy1_tvalid),
+    .o1_tready(r_cpy1_tready),
+
+    .o2_tready(1'b0),
+    .o3_tready(1'b0)
+);
+
 wire [31:0] abs2_r_tdata;               // 3 cycles latency
 wire abs2_r_tlast, abs2_r_tvalid, abs2_r_tready;
 mult #(
@@ -170,15 +201,15 @@ mult #(
     .clk(clk),
     .reset(reset),
 
-    .a_tdata(r_tdata),
-    .a_tlast(r_tlast),
-    .a_tvalid(r_tvalid),
-    .a_tready(r_tready),
+    .a_tdata(r_cpy0_tdata),
+    .a_tlast(r_cpy0_tlast),
+    .a_tvalid(r_cpy0_tvalid),
+    .a_tready(r_cpy0_tready),
 
-    .b_tdata(r_tdata),
-    .b_tlast(r_tlast),
-    .b_tvalid(r_tvalid),
-    .b_tready(r_tready),
+    .b_tdata(r_cpy1_tdata),
+    .b_tlast(r_cpy1_tlast),
+    .b_tvalid(r_cpy1_tvalid),
+    .b_tready(r_cpy1_tready),
 
     .p_tdata(abs2_r_tdata),
     .p_tlast(abs2_r_tlast),
@@ -191,7 +222,7 @@ wire [31:0] abs2_r_lat_tdata;
 wire abs2_r_lat_tlast, abs2_r_lat_tvalid, abs2_r_lat_tready;
 axi_latency #(
     .WIDTH(32),
-    .DELAY(6) // (abs2_p - abs2_r) = (10 + 4) - (5 + 3) =  6
+    .DELAY(5) // (abs2_p - abs2_r) = (10 + 4) - (5 + 3 + 1) =  5
 ) delay_latency (
     .clk(clk),
     .reset(reset),

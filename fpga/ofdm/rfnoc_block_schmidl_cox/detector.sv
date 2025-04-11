@@ -159,11 +159,11 @@ always @(posedge clk) begin
 end
 
 // Output signal generation (the is_valid signal is used to indicate the valid samples)
-// assign o_tdata = i_tdata; // => THIS IS THE RIGHT WAY TO DO
-assign o_tdata = is_valid ? i_tdata : 0;
+assign o_tdata = i_tdata; // => THIS IS THE RIGHT WAY TO DO
+// assign o_tdata = is_valid ? i_tdata : 0;
 assign o_tlast = i_tlast;
-//assign o_tvalid = i_tvalid & is_valid; // => THIS IS THE RIGHT WAY TO DO
-assign o_tvalid = i_tvalid;
+assign o_tvalid = i_tvalid & is_valid; // => THIS IS THE RIGHT WAY TO DO
+// assign o_tvalid = i_tvalid;
 assign i_tready = o_tready;
 
 // Metric output generation

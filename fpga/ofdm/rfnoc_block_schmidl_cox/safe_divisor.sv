@@ -23,7 +23,7 @@ assign i_tready = ready_int;
 
 always @(posedge clk) begin
     if (reset || clear) begin
-        o_tdata <= {WIDTH{1'b1}};
+        o_tdata <= {{(WIDTH-1){1'b0}}, 1'b1};
         o_tlast <= 1'b0;
         o_tvalid <= 1'b0;
         ready_int <= 1'b1;
