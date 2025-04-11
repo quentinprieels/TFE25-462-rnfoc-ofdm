@@ -1,3 +1,16 @@
+//
+// Complex Truncation Module
+//
+// This module truncates the input data to a specified width.
+// The input data is assumed to be complex, with real and imaginary parts.
+// Real data are supposed to be in the upper half of the input data.
+// The imaginary data are supposed to be in the lower half of the input data.
+//
+// Only MSBs are kept, the rest are discarded.
+// The output data is also complex, with real and imaginary parts.
+// The output data is assumed to be in the same format as the input data.
+//
+
 module complex_trunc #(
     parameter integer WIDTH_IN = 41,
     parameter integer WIDTH_OUT = 16

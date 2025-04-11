@@ -1,3 +1,20 @@
+//
+// Symbol autocorrelator
+//
+// This module implements the Schmidl-Cox autocorrelator for OFDM symbol synchronization.
+// It computes the correlation metric P(d) for the Schmidl-Cox algorithm.
+// P(d+1) = P(d) + I(d - HALF_FFT_SIZE)* x I(d) - I(d - FFT_SIZE)* x I(d - HALF_FFT_SIZE)
+// where I(d) is the input signal, and x denotes complex multiplication.
+//
+// This module outputs the correlation metric P(d) and the delayed input signal y(d-L).
+// Both outputs are delayed during the processing to ensure synchronization.
+//
+// Caracters:
+// --> 8 samples delay
+// --> 16 bits per component
+// --> truncated from 42 bits/component to 16 bits/component
+//
+
 module symbol_autocorrelator #(
     parameter integer FFT_SIZE = 1024
 ) (

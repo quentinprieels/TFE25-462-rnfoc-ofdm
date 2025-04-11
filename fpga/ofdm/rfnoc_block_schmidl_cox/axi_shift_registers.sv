@@ -1,3 +1,13 @@
+//
+// AXI Shift Register Module
+//
+// This module implements a shift register for AXI Stream data.
+// It allows for a configurable delay in the data stream.
+// The module delay all input signals by a specified number of clock cycles.
+// The delay is implemented using a series of registers.
+// The module also includes a clear signal to reset the registers.
+//
+
 module axis_shift_register #(
     parameter WIDTH = 32,
     parameter DELAY = 8
