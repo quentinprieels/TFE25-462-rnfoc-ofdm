@@ -8,7 +8,7 @@
 // The module also includes a clear signal to reset the registers.
 //
 
-module axis_shift_register #(
+module axi_latency #(
     parameter WIDTH = 32,
     parameter DELAY = 8
 ) (
@@ -64,4 +64,4 @@ module axis_shift_register #(
     assign m_axis_tlast = last_regs[DELAY-1];
     assign m_axis_tdata = data_regs[DELAY-1];
 
-endmodule
+endmodule // axi_latency

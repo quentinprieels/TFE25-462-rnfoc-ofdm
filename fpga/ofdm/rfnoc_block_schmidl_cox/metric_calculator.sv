@@ -189,7 +189,7 @@ mult #(
 // Add latency to abs2_r_tdata to match the latency of abs2_p_tdata
 wire [31:0] abs2_r_lat_tdata;
 wire abs2_r_lat_tlast, abs2_r_lat_tvalid, abs2_r_lat_tready;
-axis_shift_register #(
+axi_latency #(
     .WIDTH(32),
     .DELAY(6) // (abs2_p - abs2_r) = (10 + 4) - (5 + 3) =  6
 ) delay_latency (
@@ -296,7 +296,7 @@ moving_sum #(                       // 1 cycle latency
 
 
 // Add latency to the yl stream to match the latency of the metric
-axis_shift_register #(
+axi_latency #(
     .WIDTH(32),
     .DELAY(77) // metric - yl = (autocorr + abs + buf + div + ms) - yl = (10 + 4 + 1 + 71 + 1) - 10 =  77
 ) yl_latency (

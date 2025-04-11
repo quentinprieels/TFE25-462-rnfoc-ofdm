@@ -274,7 +274,7 @@ complex_trunc #(
 );
 
 // Signal flow management - delay the delayed stream by 8 sample (synchronise y(d-L) with P(d))
-axis_shift_register #(
+axi_latency #(
     .WIDTH(32),
     .DELAY(8)
 ) delay_latency (
