@@ -228,26 +228,27 @@ axi_fifo_short #(
     .o_tready(abs2_p_buf_tready)
 );
 
-wire [31:0] abs2_r_lat_buf_tdata;           // 1 cycle latency
-wire abs2_r_lat_buf_tlast, abs2_r_lat_buf_tvalid, abs2_r_lat_buf_tready;
-axi_fifo_short #(
-    .WIDTH(33)
-) abs2_r_lat_buf (
+wire [31:0] abs2_r_lat_safebuf_tdata;               // 1 cycle latency
+wire abs2_r_lat_safebuf_tlast, abs2_r_lat_safebuf_tvalid, abs2_r_lat_safebuf_tready;
+safe_divisor #(
+    .WIDTH(32)
+) divisor_guard (
     .clk(clk),
     .reset(reset),
     .clear(clear),
-
-    .i_tdata({abs2_r_lat_tdata, abs2_r_lat_tlast}),
+    
+    .i_tdata(abs2_r_lat_tdata),
+    .i_tlast(abs2_r_lat_tlast),
     .i_tvalid(abs2_r_lat_tvalid),
     .i_tready(abs2_r_lat_tready),
-
-    .o_tdata({abs2_r_lat_buf_tdata, abs2_r_lat_buf_tlast}),
-    .o_tvalid(abs2_r_lat_buf_tvalid),
-    .o_tready(abs2_r_lat_buf_tready)
+    
+    .o_tdata(abs2_r_lat_safebuf_tdata),
+    .o_tlast(abs2_r_lat_safebuf_tlast),
+    .o_tvalid(abs2_r_lat_safebuf_tvalid),
+    .o_tready(abs2_r_lat_safebuf_tready)
 );
 
-wire [31:0] safe_abs2_r_lat_buf_tdata;
-assign safe_abs2_r_lat_buf_tdata = (abs2_r_lat_buf_tdata == 0) ? 1 : abs2_r_lat_buf_tdata;
+
 wire [31:0] metric_quotient_tdata, metric_rest_tdata;   // 71 cycles latency
 wire metric_quotient_tlast, metric_quotient_tvalid, metric_quotient_tready;
 divide_int32 divider (
@@ -260,10 +261,10 @@ divide_int32 divider (
     .s_axis_dividend_tready(abs2_p_buf_tready),
     
     
-    .s_axis_divisor_tdata(safe_abs2_r_lat_buf_tdata),
-    .s_axis_divisor_tlast(abs2_r_lat_buf_tlast),
-    .s_axis_divisor_tvalid(abs2_r_lat_buf_tvalid),
-    .s_axis_divisor_tready(abs2_r_lat_buf_tready),
+    .s_axis_divisor_tdata(abs2_r_lat_safebuf_tdata),
+    .s_axis_divisor_tlast(abs2_r_lat_safebuf_tlast),
+    .s_axis_divisor_tvalid(abs2_r_lat_safebuf_tvalid),
+    .s_axis_divisor_tready(abs2_r_lat_safebuf_tready),
 
     .m_axis_dout_tdata({metric_quotient_tdata, metric_rest_tdata}),
     .m_axis_dout_tlast(metric_quotient_tlast),

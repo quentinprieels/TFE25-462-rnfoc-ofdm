@@ -257,20 +257,23 @@ module rfnoc_block_schmidl_cox #(
     .reset(axis_data_rst),  // Used to reset the module on device startup
     .clear(1'b0),           // Used to reset only internal states of the module (not software defined registers)
 
+    // Input signal
     .i_tdata(m_in_payload_tdata),
     .i_tlast(m_in_payload_tlast),
     .i_tvalid(m_in_payload_tvalid),
     .i_tready(m_in_payload_tready),
 
+    // Metric output
     .m_tdata(m_tdata),
     .m_tlast(m_tlast),
     .m_tvalid(m_tvalid),
-    .m_tready(s_out_payload_tready),
+    .m_tready(m_tready),
 
+    // Output signal
     .o_tdata(yl_tdata),
     .o_tlast(yl_tlast),
     .o_tvalid(yl_tvalid),
-    .o_tready(s_out_payload_tready)
+    .o_tready(yl_tready)
   );
 
   detector #(

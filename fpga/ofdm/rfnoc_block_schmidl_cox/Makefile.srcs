@@ -24,5 +24,6 @@ symbol_autocorrelator.sv \
 complex_trunc.sv \
 axi_latency.sv \
 symbol_energy.sv \
+safe_divisor.sv \
 detector.sv \
 )
