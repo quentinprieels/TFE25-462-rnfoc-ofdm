@@ -3,6 +3,22 @@
 This RFNoC out-of-tree module provides an OFDM block for use in RFNoC flowgraphs.
 Its main purpose is to provide a partial implementation of an OFDM receiver.
 
+## RFNoC
+
+RFNoC is a heterogeneous processing framework that can be used to implement high
+throughput DSP in the FPGA, for Software Defined Radio (SDR) systems, in an
+easy-to-use and flexible way. RFNoC and GNU Radio can be used to implement 
+heterogenous DSP systems that can span CPU-based hosts, embedded systems and FPGAs.
+
+RFNoC can be used to implement DSP “flow-graphs” where DSP algorithms and IP blocks
+are represented as nodes in the graph and the data-flow between them as edges.
+RFNoC, which is a network-on-chip architecture, abstracts away the setup associated
+with the nodes and edges of the graph and provides seamless and consistent
+interfaces to implement IP in the FPGA and software.
+
+See the RFNoC specification for more details on the architecture and how to use it:
+https://files.ettus.com/app_notes/RFNoC_Specification.pdf
+
 ## Directory Structure (in alphabetical order)
 
 This folder was generated using the `rfnoc_modtool` tool provided by UHD 4.8.0.
@@ -28,10 +44,6 @@ EttusResearch recommends sticking to this directory structure and file layout.
   module, these files get copied to the installation path's RFNoC package dir
   (e.g., `/usr/share/uhd/rfnoc/fpga/ofdm`) so the image builder can find
   all the source files when compiling bitfiles that use multiple OOT modules.
-
-* `gr-rfnoc_ofdm`: An out-of-tree module for GNU Radio, which depends on this
-  RFNoC out-of-tree module and provides GNU Radio and GNU Radio Companion
-  bindings for using the ofdm block from within GNU Radio.
 
 * `icores`: Stores full image core files. YAML files in this directory get
   picked up by CMake and get turned into build targets. For example, here we
@@ -76,6 +88,11 @@ EttusResearch recommends sticking to this directory structure and file layout.
 
 ## Building this module
 
+Before building this module, make sure you have installed the required
+software (UHD 4.8.0 on commit `0dede88`, Vivado 2022.1, and the RFNoC
+development environment). You can find the instructions for installing
+those in the [installation.md](INSTALLATION.md) file of this repository.
+
 To build and install this module, follow these steps:
 
 1. Create a build directory and navigate to it:
@@ -93,5 +110,7 @@ To build and install this module, follow these steps:
     ```
     Replace `<repo>` with the path to the [UHD repository](https://github.com/EttusResearch/uhd).
 
-The `make help` command will show you all available build targets for installing, testing and generating
-the image core bitfiles.
+The `make help` command will show you all available build targets for installing, testing and generating the image core bitfiles.
+
+If you want more detailed instructions on how to build this module and use it,
+you can check the [building.md](BUILDING.md) file of this repository.
