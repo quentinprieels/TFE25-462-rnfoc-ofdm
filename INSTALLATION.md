@@ -151,16 +151,24 @@ Setting up a 64-bit FPGA build environment for the USRP-X3x0...
 > different shell, change the shell to `bash` before running the script (using the `bash` command for 
 > example).
 
-
 ### Connect to a licensed server
 
-TODO
+To be able to build the FPGA images, you need to have a valid license for Vivado. If you have a license
+server, you can connect to it by configuring the `XILINXD_LICENSE_FILE` environment variable. You can
+either export the variable in your `.bashrc` file `export` it in the terminal before running the
+`setupenv.sh` script, or add it to your `/etc/environment` file. To do so, run the following command:
+```bash
+echo "XILINXD_LICENSE_FILE=<port>@<license_server>" | sudo tee -a /etc/environment
+```
+
+To verify that the license server is correctly configured, run the `echo $XILINXD_LICENSE_FILE`
+command. You can also run the `vivado` command, then click on the `Help` menu and select `Manage License`.
+In the `View License Status` tab, you should see the status of your license. 
 
 ## Install ModelSim
 
 TODO
 
-Do not forget the tips in case of wrong modelsim version => you should modify some scripts of the UHD respository to point to the correct version of ModelSim.
 
 ## GNU Radio
 
