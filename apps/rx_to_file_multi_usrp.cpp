@@ -138,8 +138,8 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
 		("dilv", "specify to disable inner-loop verbose")
 		("channels", po::value<vec_size_t>(&channels)->default_value(vec_size_t{0}, "0")->multitoken(), "which channel(s) to use")
 		("sync", po::value<std::string>(&sync_method)->default_value("internal"), "initial synchronization method: internal, external, gpsdo")
-		("sc_threshold", po::value<uint32_t>(&sc_threshold)->default_value(0), "Schmidl & Cox threshold")
-		("sc_packet_size", po::value<uint32_t>(&sc_packet_size)->default_value(0), "Schmidl & Cox packet size");
+		("sc_threshold", po::value<uint32_t>(&sc_threshold), "Schmidl & Cox threshold")
+		("sc_packet_size", po::value<uint32_t>(&sc_packet_size), "Schmidl & Cox packet size");
 		;
 	po::variables_map vm;
 	po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -319,28 +319,39 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
 	}
 
 	// Set the Schmidl & Cox threshold
-	std::cout << "Setting Schmidl & Cox threshold to " << sc_threshold << "..." << std::endl;
-	sc_block->set_threshold_value(sc_threshold);
-	const uint32_t sc_threshold_read = sc_block->get_threshold_value();
-	if (sc_threshold_read != sc_threshold) {
-		std::cerr << "ERROR: Readback of Schmidl & Cox threshold value not working! "
-			<< "Expected: " << sc_threshold << " Read: " << sc_threshold_read << std::endl;
-		return EXIT_FAILURE;
-	} else {
-		std::cout << "Schmidl & Cox threshold value read/write loopback successful!" << std::endl;
-	}
+	if (vm.count("threshold")) {
+        std::cout << "Setting Schmidl & Cox threshold to " << sc_threshold << "..." << std::endl;
+        sc_block->set_threshold_value(sc_threshold);
+        const uint32_t threshold_read = sc_block->get_threshold_value();
+        if (threshold_read != sc_threshold) {
+            std::cerr << "ERROR: Readback of Schmidl & Cox threshold value not working! "
+                      << "Expected: " << sc_threshold << " Read: " << threshold_read << std::endl;
+            return EXIT_FAILURE;
+        } else {
+            std::cout << "Schmidl & Cox threshold value read/write loopback successful!" << std::endl;
+        }
+    } else {
+        uint32_t default_threshold = sc_block->get_threshold_value();
+        std::cout << "Using default Schmidl & Cox threshold value: " << default_threshold 
+              << " (0x" << std::hex << default_threshold << std::dec << ")" << std::endl;
+    }
 
 	// Set the Schmidl & Cox packet size
-	std::cout << "Setting Schmidl & Cox packet size to " << sc_packet_size << "..." << std::endl;
-	sc_block->set_packet_size(sc_packet_size);
-	const uint32_t sc_packet_size_read = sc_block->get_packet_size();
-	if (sc_packet_size_read != sc_packet_size) {
-		std::cerr << "ERROR: Readback of Schmidl & Cox packet size not working! "
-			<< "Expected: " << sc_packet_size << " Read: " << sc_packet_size_read << std::endl;
-		return EXIT_FAILURE;
-	} else {
-		std::cout << "Schmidl & Cox packet size read/write loopback successful!" << std::endl;
-	}
+	if (vm.count("packet-size")) {
+        std::cout << "Setting Schmidl & Cox packet size to " << sc_packet_size << "..." << std::endl;
+        sc_block->set_packet_size(sc_packet_size);
+        const uint32_t sc_packet_size_read = sc_block->get_packet_size();
+        if (sc_packet_size_read != sc_packet_size) {
+            std::cerr << "ERROR: Readback of Schmidl & Cox packet size not working! "
+                      << "Expected: " << sc_packet_size << " Read: " << sc_packet_size_read << std::endl;
+            return EXIT_FAILURE;
+        } else {
+            std::cout << "Schmidl & Cox packet size read/write loopback successful!" << std::endl;
+        }
+    } else {
+        std::cout << "Using default Schmidl & Cox packet size: " << sc_block->get_packet_size() 
+              << " (0x" << std::hex << sc_block->get_packet_size() << std::dec << ")" << std::endl;
+    }
 
 	// Allow for some setup time
 	std::this_thread::sleep_for(std::chrono::seconds(1));

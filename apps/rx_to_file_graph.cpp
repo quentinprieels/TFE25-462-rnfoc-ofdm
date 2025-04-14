@@ -385,7 +385,9 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
             std::cout << "Schmidl & Cox threshold value read/write loopback successful!" << std::endl;
         }
     } else {
-        std::cout << "Using default Schmidl & Cox threshold value: " << schmidl_cox_ctrl->get_threshold_value() << std::endl;
+        uint32_t default_threshold = schmidl_cox_ctrl->get_threshold_value();
+        std::cout << "Using default Schmidl & Cox threshold value: " << default_threshold 
+              << " (0x" << std::hex << default_threshold << std::dec << ")" << std::endl;
     }
 
     // Set the Schmidl & Cox packet size
@@ -401,7 +403,8 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
             std::cout << "Schmidl & Cox packet size read/write loopback successful!" << std::endl;
         }
     } else {
-        std::cout << "Using default Schmidl & Cox packet size: " << schmidl_cox_ctrl->get_packet_size() << std::endl;
+        std::cout << "Using default Schmidl & Cox packet size: " << schmidl_cox_ctrl->get_packet_size() 
+              << " (0x" << std::hex << schmidl_cox_ctrl->get_packet_size() << std::dec << ")" << std::endl;
     }
 
 
@@ -466,6 +469,7 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
 			timeout = 0.1;
 
 			// Handle errors (in a more controlled way)
+            /*
 			if (md.error_code == uhd::rx_metadata_t::ERROR_CODE_TIMEOUT) {
 				std::cout << "Timeout error" << std::endl;
 				break;
@@ -474,6 +478,7 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
 				std::cerr << "Reception error" << std::endl;
 				continue;
 			}
+            */
 
 			num_acc_samps += num_rx_samps;
 
