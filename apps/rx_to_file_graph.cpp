@@ -1,3 +1,8 @@
+// Usage: 
+// ./rx_to_file_graph --args name=jerome --ant "TX/RX" --ref "external" --rate 200e6 --freq 3.2e9 --gain 30 --nsamps 17474560 --file "received_signal" --bw 160e6 --nbr-meas 1 --secs 0.5 
+
+// --threshold 0x02000000 --packet-size 0x00002304
+
 #include <uhd/utils/thread.hpp>
 #include <uhd/utils/safe_main.hpp>
 #include <uhd/utils/graph_utils.hpp>
@@ -11,157 +16,24 @@
 #include <boost/format.hpp>
 #include <chrono>
 #include <csignal>
-
+#include <iostream>
+#include <fstream>
+#include <complex>
+#include <ctime>
+#include <vector>
+#include <csignal>
+#include <string>
+#include <algorithm>
 
 namespace po = boost::program_options;
+using vec_complex_float     = std::vector<std::complex<float>>;
+using vec_vec_complex_float = std::vector<vec_complex_float>;
 
 // Singnal handler
 static bool stop_signal_called = false;
 void sig_int_handler(int) {
     stop_signal_called = true;
 }
-
-// Function to receive samples and write to file
-/*
-template <typename samp_type>
-void recv_to_file(uhd::rx_streamer::sptr rx_stream,
-    const std::string& file,
-    const size_t samps_per_buff,
-    const double rx_rate,
-    const unsigned long long num_requested_samples,
-    double time_requested       = 0.0,
-    bool bw_summary             = false,
-    bool stats                  = false,
-    bool enable_size_map        = false,
-    bool continue_on_bad_packet = false) {
-    unsigned long long num_total_samps = 0;
-
-    uhd::rx_metadata_t md;
-    std::vector<samp_type> buff(samps_per_buff);
-    std::ofstream outfile;
-    if (not file.empty()) {
-        outfile.open(file.c_str(), std::ofstream::binary);
-    }
-    bool overflow_message = true;
-
-    // setup streaming
-    uhd::stream_cmd_t stream_cmd((num_requested_samples == 0)
-                                     ? uhd::stream_cmd_t::STREAM_MODE_START_CONTINUOUS
-                                     : uhd::stream_cmd_t::STREAM_MODE_NUM_SAMPS_AND_DONE);
-    stream_cmd.num_samps  = size_t(num_requested_samples);
-    stream_cmd.stream_now = true;
-    stream_cmd.time_spec  = uhd::time_spec_t();
-    std::cout << "Issuing stream cmd" << std::endl;
-    rx_stream->issue_stream_cmd(stream_cmd);
-
-    const auto start_time = std::chrono::steady_clock::now();
-    const auto stop_time = start_time + std::chrono::milliseconds(int64_t(1000 * time_requested));
-    // Track time and samps between updating the BW summary
-    auto last_update                     = start_time;
-    unsigned long long last_update_samps = 0;
-
-    typedef std::map<size_t, size_t> SizeMap;
-    SizeMap mapSizes;
-
-    // Run this loop until either time expired (if a duration was given), until
-    // the requested number of samples were collected (if such a number was
-    // given), or until Ctrl-C was pressed.
-    while (not stop_signal_called
-           and (num_requested_samples != num_total_samps or num_requested_samples == 0)
-           and (time_requested == 0.0 or std::chrono::steady_clock::now() <= stop_time)) {
-        const auto now = std::chrono::steady_clock::now();
-
-        size_t num_rx_samps =
-            rx_stream->recv(&buff.front(), buff.size(), md, 3.0, enable_size_map);
-
-        if (md.error_code == uhd::rx_metadata_t::ERROR_CODE_TIMEOUT) {
-            std::cout << "Timeout while streaming" << std::endl;
-            break;
-        }
-        if (md.error_code == uhd::rx_metadata_t::ERROR_CODE_OVERFLOW) {
-            if (overflow_message) {
-                overflow_message = false;
-                std::cerr
-                    << "Got an overflow indication. Please consider the following:\n"
-                       "  Your write medium must sustain a rate of "
-                    << (rx_rate * sizeof(samp_type) / 1e6)
-                    << "MB/s.\n"
-                       "  Dropped samples will not be written to the file.\n"
-                       "  Please modify this example for your purposes.\n"
-                       "  This message will not appear again.\n";
-            }
-            continue;
-        }
-        if (md.error_code != uhd::rx_metadata_t::ERROR_CODE_NONE) {
-            std::string error = std::string("Receiver error: ") + md.strerror();
-            if (continue_on_bad_packet) {
-                std::cerr << error << std::endl;
-                continue;
-            } else
-                throw std::runtime_error(error);
-        }
-
-        if (enable_size_map) {
-            SizeMap::iterator it = mapSizes.find(num_rx_samps);
-            if (it == mapSizes.end())
-                mapSizes[num_rx_samps] = 0;
-            mapSizes[num_rx_samps] += 1;
-        }
-
-        num_total_samps += num_rx_samps;
-
-        if (outfile.is_open()) {
-            outfile.write((const char*)&buff.front(), num_rx_samps * sizeof(samp_type));
-        }
-
-        if (bw_summary) {
-            last_update_samps += num_rx_samps;
-            const auto time_since_last_update = now - last_update;
-            if (time_since_last_update > std::chrono::seconds(UPDATE_INTERVAL)) {
-                const double time_since_last_update_s =
-                    std::chrono::duration<double>(time_since_last_update).count();
-                const double rate = double(last_update_samps) / time_since_last_update_s;
-                std::cout << "\t" << (rate / 1e6) << " MSps" << std::endl;
-                last_update_samps = 0;
-                last_update       = now;
-            }
-        }
-    }
-    const auto actual_stop_time = std::chrono::steady_clock::now();
-
-    stream_cmd.stream_mode = uhd::stream_cmd_t::STREAM_MODE_STOP_CONTINUOUS;
-    std::cout << "Issuing stop stream cmd" << std::endl;
-    rx_stream->issue_stream_cmd(stream_cmd);
-
-    // Run recv until nothing is left
-    int num_post_samps = 0;
-    do {
-        num_post_samps = rx_stream->recv(&buff.front(), buff.size(), md, 3.0);
-    } while (num_post_samps and md.error_code == uhd::rx_metadata_t::ERROR_CODE_NONE);
-
-    if (outfile.is_open())
-        outfile.close();
-
-    if (stats) {
-        std::cout << std::endl;
-
-        const double actual_duration_seconds =
-            std::chrono::duration<float>(actual_stop_time - start_time).count();
-
-        std::cout << "Received " << num_total_samps << " samples in "
-                  << actual_duration_seconds << " seconds" << std::endl;
-        const double rate = (double)num_total_samps / actual_duration_seconds;
-        std::cout << (rate / 1e6) << " MSps" << std::endl;
-
-        if (enable_size_map) {
-            std::cout << std::endl;
-            std::cout << "Packet size map (bytes: count)" << std::endl;
-            for (SizeMap::iterator it = mapSizes.begin(); it != mapSizes.end(); it++)
-                std::cout << it->first << ":\t" << it->second << std::endl;
-        }
-    }
-}
-*/
 
 // Function to check if a sensor is locked
 typedef std::function<uhd::sensor_value_t(const std::string&)> get_sensor_fn_t;
@@ -211,9 +83,9 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
      *******************/
 
     // Variables to be set by po
-    std::string args, file, format, ant, subdev, ref, streamargs;
-    size_t total_num_samps, spb, spp, radio_id, radio_chan;
-    double rate, freq, gain, bw, total_time, setup_time, lo_offset;
+    std::string args, file, format, ant, ref, streamargs, channel;
+    size_t total_num_samps, spb, spp, radio_id, radio_chan, nbr_meas;
+    double rate, freq, gain, bw, total_time, setup_time, lo_offset, seconds_betw_meas, seconds_in_future;
     uint32_t threshold, packet_size;
 
     // Setup the program options
@@ -227,6 +99,8 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
         ("spb", po::value<size_t>(&spb)->default_value(10000), "samples per buffer")
         ("spp", po::value<size_t>(&spp), "samples per packet (on FPGA and wire)")
         ("streamargs", po::value<std::string>(&streamargs)->default_value(""), "stream args")
+        ("nbr-meas", po::value<size_t>(&nbr_meas)->default_value(1), "number of measurements to receive")
+        ("secs", po::value<double>(&seconds_betw_meas)->default_value(0), "number of seconds between measurements")
 
         ("args", po::value<std::string>(&args)->default_value(""), "USRP device address args")
         ("setup-time", po::value<double>(&setup_time)->default_value(1.0), "seconds of setup time")
@@ -239,10 +113,9 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
         ("ant", po::value<std::string>(&ant)->default_value("RX2"), "RX antenna selection")
         ("bw", po::value<double>(&bw)->default_value(0.0), "RX analog frontend filter bandwidth in Hz")
         ("ref", po::value<std::string>(&ref)->default_value("internal"), "reference source (internal, external, gpsdo)")
-        ("subdev", po::value<std::string>(&subdev)->default_value("A:0"), "subdev spec")
 
-        ("threshold", po::value<uint32_t>(&threshold)->default_value(0), "Schmidl & Cox threshold")
-        ("packet-size", po::value<uint32_t>(&packet_size)->default_value(0), "Schmidl & Cox packet size")
+        ("threshold", po::value<uint32_t>(&threshold), "Schmidl & Cox threshold")
+        ("packet-size", po::value<uint32_t>(&packet_size), "Schmidl & Cox packet size")
         
         ("skip-lo", "Skip checking LO lock status")
         ("lo-offset", po::value<double>(&lo_offset), "Offset for frontend LO in Hz (optional)")
@@ -275,6 +148,9 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
         std::cerr << desc << std::endl;
         return EXIT_FAILURE;
     }
+
+    // std::cout << boost::format("Using Schmidl & Cox threshold: %d (0x%08x)") % threshold % threshold << std::endl;
+    // std::cout << boost::format("Using Schmidl & Cox packet size: %d (0x%08x)") % packet_size % packet_size << std::endl;
 
     bool bw_summary = vm.count("progress") > 0;
     bool stats = vm.count("stats") > 0;
@@ -342,10 +218,13 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
                     ddc_ctrl = graph->get_block<uhd::rfnoc::ddc_block_control>(edge.dst_blockid);
                     ddc_chan = edge.dst_port;
                 } 
-                if (uhd::rfnoc::block_id_t(edge.dst_blockid).get_block_name() == "schmidl_cox") {
+                if (uhd::rfnoc::block_id_t(edge.dst_blockid).get_block_name() == "Schmidl_cox") {
                     schmidl_cox_ctrl = graph->get_block<rfnoc::ofdm::schmidl_cox_block_control>(edge.dst_blockid);
                     schmidl_cox_chan = edge.dst_port;
                 }
+
+                // Print the list of blocks in the chain for debugging
+                // std::cout << "Found block: " << (uhd::rfnoc::block_id_t(edge.dst_blockid)).get_block_name() << std::endl;
             }
         } else {
             std::cerr << "ERROR: No blocks found in the chain!" << std::endl;
@@ -377,6 +256,7 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
         std::cout << "Setting reference source to " << ref << "..." << std::endl;
         graph->get_mb_controller(0)->set_clock_source(ref);
         graph->get_mb_controller(0)->set_time_source(ref);
+        graph->synchronize_devices(uhd::time_spec_t(0.0), false);
         std::cout << "Reference source set to " << graph->get_mb_controller(0)->get_clock_source() << std::endl << std::endl;
     }
 
@@ -439,7 +319,7 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
     // Create the receiver streamer
     uhd::stream_args_t stream_args(format, "sc16"); //TODO: Check this. What is the output format that will be written to the file?
     stream_args.args = streamer_args;
-    std::cout << "Using streamer args: " << stream_args.args.to_string() << std::endl;
+    std::cout << "Using streamer args: " << stream_args.args.to_string() << std::endl << std::endl;
     auto rx_stream = graph->create_rx_streamer(1, stream_args);
 
     // Connect streamer to last block and commit the graph
@@ -449,6 +329,7 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
     for (auto& edge : graph->enumerate_active_connections()) {
         std::cout << "* " << edge.to_string() << std::endl;
     }
+    std::cout << std::endl;
 
 
     /**********************************************************
@@ -503,6 +384,8 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
         } else {
             std::cout << "Schmidl & Cox threshold value read/write loopback successful!" << std::endl;
         }
+    } else {
+        std::cout << "Using default Schmidl & Cox threshold value: " << schmidl_cox_ctrl->get_threshold_value() << std::endl;
     }
 
     // Set the Schmidl & Cox packet size
@@ -517,6 +400,8 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
         } else {
             std::cout << "Schmidl & Cox packet size read/write loopback successful!" << std::endl;
         }
+    } else {
+        std::cout << "Using default Schmidl & Cox packet size: " << schmidl_cox_ctrl->get_packet_size() << std::endl;
     }
 
 
@@ -527,34 +412,110 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
         std::signal(SIGINT, &sig_int_handler);
         std::cout << "Press Ctrl + C to stop streaming..." << std::endl;
     }
+    
+    // Setup streaming
+    seconds_in_future = graph->get_mb_controller(0)->get_timekeeper(0)->get_time_last_pps().get_real_secs() + seconds_betw_meas;
 
-    /*
-    #define recv_to_file_args() (   \
-        rx_stream,                  \
-        file,                       \
-        spb,                        \
-        rate,                       \
-        total_num_samps,            \
-        total_time,                 \
-        bw_summary,                 \
-        stats,                      \
-        enable_size_map,            \
-        continue_on_bad_packet      \
-    )
+    // Meta-data will be filled in by recv()
+	uhd::rx_metadata_t md;
 
-    // recv to file
-    if (format == "fc64")
-        recv_to_file<std::complex<double>> recv_to_file_args();
-    else if (format == "fc32")
-        recv_to_file<std::complex<float>> recv_to_file_args();
-    else if (format == "sc16")
-        recv_to_file<std::complex<short>> recv_to_file_args();
-    else
-        throw std::runtime_error("Unknown data format: " + format);
-    */
+    // Allocate buffers to receive with sample (one buffer per channel)
+    size_t num_chan = rx_stream->get_num_channels();
+	const size_t samps_per_buff = total_num_samps;
+	vec_vec_complex_float buffs(num_chan, vec_complex_float(samps_per_buff));
 
-    // finished
-    std::cout << std::endl << "Done!" << std::endl << std::endl;
+    // Create a vector of pointers to point to each of the channel buffers
+	std::vector<std::complex<float> *> buff_ptrs;
+	for (size_t i = 0; i < num_chan; ++i) {
+		buff_ptrs.push_back(&buffs[i].front());
+	}
+   
+    // Create dataOutfile
+	std::ofstream dataOutfile(file + "_rx.dat", std::ofstream::binary);
 
+    // Mesures from multi-usrp example
+    clock_t start_time, end_time;
+	double cpu_time_used = 0.0;
+	start_time = clock();
+
+    // Initialize maximum absolute value of the measured I and Q samples for clipping checking
+	float maxI = 0;
+	float maxQ = 0;
+
+    for (size_t i = 0; i < nbr_meas; ++i) {
+		std::cout << std::endl;
+
+		uhd::stream_cmd_t stream_cmd(uhd::stream_cmd_t::STREAM_MODE_NUM_SAMPS_AND_DONE);
+		stream_cmd.num_samps = total_num_samps;
+		stream_cmd.stream_now = false;
+		stream_cmd.time_spec = uhd::time_spec_t(seconds_in_future);
+		rx_stream->issue_stream_cmd(stream_cmd); //tells all channels to stream
+
+		double timeout = seconds_in_future + seconds_betw_meas - 0.1; //timeout (delay before receive + padding)
+		size_t num_acc_samps = 0; //number of accumulated samples
+
+		std::cout << "First timeout value = " << std::to_string(timeout) << " s." << std::endl;
+
+		while (num_acc_samps < total_num_samps) {
+			// Receive a single packet
+			size_t num_rx_samps = rx_stream->recv(
+				buff_ptrs, samps_per_buff, md, timeout
+			);
+
+			// Use a smaller timeout for subsequent packets
+			timeout = 0.1;
+
+			// Handle errors (in a more controlled way)
+			if (md.error_code == uhd::rx_metadata_t::ERROR_CODE_TIMEOUT) {
+				std::cout << "Timeout error" << std::endl;
+				break;
+			}
+			if (md.error_code != uhd::rx_metadata_t::ERROR_CODE_NONE) {
+				std::cerr << "Reception error" << std::endl;
+				continue;
+			}
+
+			num_acc_samps += num_rx_samps;
+
+			for (size_t j = 0; j < num_chan; ++j) {
+				// Check the maximal absolute value of I and Q to detect clipping
+				std::vector<float> I_vec(num_rx_samps);
+				std::vector<float> Q_vec(num_rx_samps);
+				
+				// Extract the absolute value of I and Q from the RX buffer and put it in I_vec and Q_vec
+				for (size_t k = 0; k < num_rx_samps; k++) { 
+					I_vec[k] = std::abs(buffs[j][k].real());
+					Q_vec[k] = std::abs(buffs[j][k].imag());
+				}
+				
+				// Find the maximum absolute value of I and Q
+				maxI = *std::max_element(I_vec.begin(), I_vec.end());
+				maxQ = *std::max_element(Q_vec.begin(), Q_vec.end());
+				std::cout << "Maximal I absolute value: " << std::to_string(maxI) << std::endl;
+				std::cout << "Maximal Q absolute value: " << std::to_string(maxQ) << std::endl;
+				if ( (maxI >= 0.99) || (maxQ > 0.99) ) {
+					std::cout << "WARNING: CLIPPING in measurements. Lower the gain or attenuate more the TX-RX direct path!" << std::endl;
+				}
+
+				// Write the received samples to the output file
+				dataOutfile.write(reinterpret_cast<const char*> (&buffs[j].front()), 
+				(std::streamsize)(num_rx_samps*sizeof(std::complex<float>)));	
+			}
+		}
+		
+		if (num_acc_samps < total_num_samps) {
+			std::cerr << "Receive timeout before all samples were received" << std::endl;
+		}
+
+		seconds_in_future += seconds_betw_meas;
+
+		end_time = clock();
+		cpu_time_used = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
+		std::cout << std::endl << "Current measurement time = " << cpu_time_used << " s" << std::endl;
+	}
+
+	// Close the output file
+	dataOutfile.close();
+	std::cout << "Done! Processed " << total_num_samps << " samples." << std::endl;
     return EXIT_SUCCESS;
 }

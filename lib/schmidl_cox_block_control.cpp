@@ -71,8 +71,8 @@ public:
 private:
     // Note: We use int instead of uint32_t here so we can use the built-in automatic
     // casting from string to int.
-    property_t<uint32_t> _threshold{PROP_KEY_THRESHOLD, DEFAULT_THRESHOLD, {res_source_info::USER}};
-    property_t<uint32_t> _packet_size{PROP_KEY_PACKET_SIZE, DEFAULT_PACKET_SIZE, {res_source_info::USER}};
+    property_t<int> _threshold{PROP_KEY_THRESHOLD, DEFAULT_THRESHOLD, {res_source_info::USER}};
+    property_t<int> _packet_size{PROP_KEY_PACKET_SIZE, DEFAULT_PACKET_SIZE, {res_source_info::USER}};
 };
 
 UHD_RFNOC_BLOCK_REGISTER_DIRECT(
