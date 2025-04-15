@@ -21,6 +21,11 @@ stream_endpoints:
     ctrl: False
     data: True
     buff_size: 0
+  ep2:
+    ctrl: False
+    data: True
+    buff_size: 32768
+    
 
 # A list of all NoC blocks in design
 # ----------------------------------
@@ -49,18 +54,21 @@ noc_blocks:
 #   - dstport = Port on the destination block to connect
 connections:
   # RF A TX
-  - { srcblk: ep0, srcport: out0, dstblk: duc0,   dstport: in_0 }
-  - { srcblk: duc0, srcport: out_0, dstblk: radio0, dstport: in_0 }
-  - { srcblk: _device_, srcport: _none_, dstblk: radio0, dstport: in_1 }
+  - { srcblk: ep0,      srcport: out0,    dstblk: duc0,   dstport: in_0 }
+  - { srcblk: duc0,     srcport: out_0,   dstblk: radio0, dstport: in_0 }
+  - { srcblk: _device_, srcport: _none_,  dstblk: radio0, dstport: in_1 }
   # 
   # RF A RX
   - { srcblk: radio0, srcport: out_0, dstblk: ddc0,   dstport: in_0 }
-  - { srcblk: ddc0,   srcport: out_0, dstblk: sc0,    dstport: in }
-  - { srcblk: sc0,    srcport: out, dstblk: ep0,    dstport: in0  }
+  - { srcblk: ddc0,   srcport: out_0, dstblk: ep0,    dstport: in0  }
   #
   # RF A RX
   - { srcblk: radio0, srcport: out_1, dstblk: ddc0,   dstport: in_1 }
   - { srcblk: ddc0,   srcport: out_1, dstblk: ep1,    dstport: in0  }
+  #
+  # Schmidl & Cox Block connections
+  - { srcblk: ep2,  srcport: out0,  dstblk: sc0,  dstport: in }
+  - { srcblk: sc0,  srcport: out,   dstblk: ep2,  dstport: in0 }
   #
   # BSP Connections
   - { srcblk: radio0,   srcport: ctrlport, dstblk: _device_, dstport: ctrlport_radio0 }

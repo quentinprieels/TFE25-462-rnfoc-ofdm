@@ -229,28 +229,30 @@ module rfnoc_block_schmidl_cox_tb;
       item_t recv_samples[$];
       logic signed [15:0] i_sample, q_sample;
       int input_file, output_file, num_samples, status, packets_sent;
-      real i_val, q_val;
+      logic [7:0] read_buffer[4]; // Buffer for one I/Q sample pair (4 bytes total)
+      int bytes_read;
       string input_filename, output_input_filename;
       bit end_of_file;
+      bit little_endian = 1; // Set to 0 for big-endian data if needed
 
-      test.start_test("Reading IQ samples from file and processing", 250us);
+      test.start_test("Reading IQ samples from binary file and processing", 250us);
 
       // Configure the block
       blk_ctrl.reg_write(REG_PACKET_SIZE_ADDR, 32'd2304);
-      blk_ctrl.reg_write(REG_THRESHOLD_ADDR, 32'h02000000);
+      blk_ctrl.reg_write(REG_THRESHOLD_ADDR, 32'h00200000);
       
-      // File containing IQ samples
-      input_filename = "/export/home/usrpconfig/Documents/GitHub/TFE25-462/rfnoc-ofdm/tests/signal_K1024_CP128_CPp128_M1_N1_preambleBPSK_payloadQPSK_usrp_recv.txt";
-      output_input_filename = "/export/home/usrpconfig/Documents/GitHub/TFE25-462/rfnoc-ofdm/tests/signal_K1024_CP128_CPp128_M1_N1_preambleBPSK_payloadQPSK_usrp_recv_out.txt";
+      // File containing IQ samples in sc16 format
+      input_filename = "/export/home/usrpconfig/Documents/GitHub/TFE25-462/rfnoc-ofdm/tests/rx_samples_raw.sc16.dat";
+      output_input_filename = "/export/home/usrpconfig/Documents/GitHub/TFE25-462/rfnoc-ofdm/tests/rx_samples_raw_out.sc16.dat";
 
-      // Open the input file for reading
-      input_file = $fopen(input_filename, "r");
+      // Open the input file for reading in binary mode
+      input_file = $fopen(input_filename, "rb");
       if (input_file == 0) begin
         `ASSERT_ERROR(0, $sformatf("Failed to open file %s", input_filename));
       end
 
-      // Open the output file for writing
-      output_file = $fopen(output_input_filename, "w");
+      // Open the output file for writing in binary mode
+      output_file = $fopen(output_input_filename, "wb");
       if (output_file == 0) begin
         `ASSERT_ERROR(0, $sformatf("Failed to open file %s", output_input_filename));
       end
@@ -261,26 +263,25 @@ module rfnoc_block_schmidl_cox_tb;
       send_samples = {};
       end_of_file = 0;
 
-      // Reand and process the file
+      // Read and process the file
       while (!end_of_file) begin
-        // Read I value
-        status = $fscanf(input_file, "%e", i_val);
-        if (status != 1) begin
+        // Read 4 bytes at a time (one I/Q sample pair)
+        bytes_read = $fread(read_buffer, input_file);
+        
+        if (bytes_read != 4) begin
           end_of_file = 1;
         end else begin
-
-          // Read Q value
-          status = $fscanf(input_file, "%e", q_val);
-          if (status != 1) begin
-            $display("Warning: Found I sample without Q sample at end of file");
-            q_val = 0.0;
-            end_of_file = 1;
+          // Convert bytes to samples based on endianness
+          if (little_endian) begin
+            // Little-endian: [I_LSB, I_MSB, Q_LSB, Q_MSB]
+            i_sample = $signed({read_buffer[1], read_buffer[0]});
+            q_sample = $signed({read_buffer[3], read_buffer[2]});
+          end else begin
+            // Big-endian: [I_MSB, I_LSB, Q_MSB, Q_LSB]
+            i_sample = $signed({read_buffer[0], read_buffer[1]});
+            q_sample = $signed({read_buffer[2], read_buffer[3]});
           end
-
-          // Convert floating point to sc16 format (signed 16-bit integers)
-          // Scale to use full range but avoid overflow
-          i_sample = $signed($rtoi(i_val * 32767.0));
-          q_sample = $signed($rtoi(q_val * 32767.0));
+          
           send_samples.push_back({i_sample, q_sample});
           num_samples++;
         end
@@ -303,19 +304,32 @@ module rfnoc_block_schmidl_cox_tb;
           `ASSERT_ERROR(recv_samples.size() == SPP,
             $sformatf("Received payload didn't match size of payload sent (expected %0d, got %0d)", SPP, recv_samples.size()));
 
-          // Convert the received samples back to floating point and write to output file
+          // Write the received samples to output file in binary sc16 format
           for (int i=0; i < recv_samples.size(); i++) begin
-            real output_i, output_q;
+            logic signed [15:0] out_i, out_q;
+            logic [7:0] out_bytes[4];
             item_t sample_out;
+            
             sample_out = recv_samples[i];
-
-            // Convert back to floating point
-            output_i = $signed(sample_out[31:16]) / 32767.0;
-            output_q = $signed(sample_out[15:0]) / 32767.0;
-
-            // Write to output file
-            $fwrite(output_file, "%.16e\n", output_i);
-            $fwrite(output_file, "%.16e\n", output_q);
+            out_i = sample_out[31:16];
+            out_q = sample_out[15:0];
+            
+            // Convert to bytes based on endianness
+            if (little_endian) begin
+              // Little-endian: [I_LSB, I_MSB, Q_LSB, Q_MSB]
+              out_bytes[0] = out_i[7:0];
+              out_bytes[1] = out_i[15:8];
+              out_bytes[2] = out_q[7:0];
+              out_bytes[3] = out_q[15:8];
+            end else begin
+              // Big-endian: [I_MSB, I_LSB, Q_MSB, Q_LSB]
+              out_bytes[0] = out_i[15:8];
+              out_bytes[1] = out_i[7:0];
+              out_bytes[2] = out_q[15:8];
+              out_bytes[3] = out_q[7:0];
+            end
+            
+            $fwrite(output_file, "%c%c%c%c", out_bytes[0], out_bytes[1], out_bytes[2], out_bytes[3]);
           end
           
           // Prepare for next packet

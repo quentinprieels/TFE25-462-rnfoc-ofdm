@@ -159,12 +159,12 @@ complex_to_magsq #(
 
 
 // Compute |R(d)|^2
-wire [31:0] r_cpy0_tdata, r_cpy1_tdata; // 1 cycle latency
+wire [15:0] r_cpy0_tdata, r_cpy1_tdata; // 1 cycle latency
 wire r_cpy0_tlast, r_cpy1_tlast;
 wire r_cpy0_tvalid, r_cpy1_tvalid;
 wire r_cpy0_tready, r_cpy1_tready;
 split_stream_fifo #(
-    .WIDTH(32),
+    .WIDTH(16),
     .ACTIVE_MASK(4'b0011)
 ) r_splitter (
     .clk(clk),
@@ -250,7 +250,7 @@ axi_fifo_short #(
     .reset(reset),
     .clear(clear),
 
-    .i_tdata({abs2_p_tdata << 16, abs2_p_tlast}), // shift left because we have an integer division later
+    .i_tdata({abs2_p_tdata << 12, abs2_p_tlast}), //! BUG SOURCE shift left because we have an integer division later
     .i_tvalid(abs2_p_tvalid),
     .i_tready(abs2_p_tready),
 

@@ -21,40 +21,26 @@ if(MSVC)
 endif(MSVC)
 find_package(Boost 1.65 REQUIRED ${BOOST_REQUIRED_COMPONENTS})
 
-# rx_to_file_multi_usrp
-add_executable(rx_to_file_multi_usrp
-   rx_to_file_multi_usrp.cpp
+# rx_to_file.cpp
+add_executable(rx_to_file
+   rx_to_file.cpp
 )
 target_include_directories(
-   rx_to_file_multi_usrp
+   rx_to_file
    PRIVATE ${CMAKE_SOURCE_DIR}/include
 )
-target_link_libraries(rx_to_file_multi_usrp
+target_link_libraries(rx_to_file
    ${UHD_LIBRARIES}
    ${Boost_LIBRARIES}
    -Wl,--no-as-needed
    rfnoc-ofdm
 )
 
-# rx_to_file_graph.cpp
-add_executable(rx_to_file_graph
-   rx_to_file_graph.cpp
-)
-target_include_directories(
-   rx_to_file_graph
-   PRIVATE ${CMAKE_SOURCE_DIR}/include
-)
-target_link_libraries(rx_to_file_graph
-   ${UHD_LIBRARIES}
-   ${Boost_LIBRARIES}
-   -Wl,--no-as-needed
-   rfnoc-ofdm
-)
 
 #### Once it's built... ########################################################
 ## Typically you would install the apps into $PATH, which is what we do here.
 install(
-   TARGETS rx_to_file_multi_usrp rx_to_file_graph
+   TARGETS rx_to_file
    RUNTIME
    DESTINATION ${RUNTIME_DIR}
    COMPONENT apps
