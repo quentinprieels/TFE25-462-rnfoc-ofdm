@@ -27,7 +27,7 @@ wire [31:0] abs_tdata;
 wire        abs_tlast, abs_tvalid, abs_tready;
 complex_to_magsq #(
     .WIDTH(16)
-) abs (
+) abs_sq (
     .clk(clk),
     .reset(reset),
     .clear(clear),

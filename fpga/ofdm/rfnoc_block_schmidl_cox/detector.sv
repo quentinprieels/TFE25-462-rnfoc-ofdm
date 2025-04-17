@@ -186,7 +186,7 @@ always_comb begin
     2'b01: begin // i_tdata, only when valid
       selected_o_tdata = i_tdata;
       selected_o_tvalid = i_tvalid & is_valid;
-      selected_o_tlast = is_last_forwarded_sample;
+      selected_o_tlast = is_valid ? i_tlast || is_last_forwarded_sample: is_last_forwarded_sample;
     end
     2'b10: begin // metric MSB
       selected_o_tdata = m_tdata[M_TDATA_WIDTH-1 -: 32];
