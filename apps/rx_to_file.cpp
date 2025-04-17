@@ -79,18 +79,18 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
     po::options_description desc("Allowed options");
     desc.add_options()
         // General options
-        ("help",        "Print help message")
+        ("help,h",        "Print help message")
         ("args",        po::value<std::string>(&args)->default_value(""),               "USRP device address args (e.g., type=x300,addr=192.168.10.2)")
-        ("filename",    po::value<std::string>(&filename)->default_value("rx_samples"), "Output file name (no extension) (default: rx_samples)")
-        ("ref",         po::value<std::string>(&ref)->default_value("external"),        "Reference source (internal, external, gpsdo) (default: external)")
+        ("filename",    po::value<std::string>(&filename)->default_value("rx_samples"), "Output file name (no extension)")
+        ("ref",         po::value<std::string>(&ref)->default_value("external"),        "Reference source (internal, external, gpsdo)")
         ("setup-time",  po::value<double>(&setup_time)->default_value(1.5),             "Setup time (s) for locks")
         ("skip-lo", "Skip checking LO lock status")
 
         // Radio
-        ("rate",    po::value<double>(&rate)->default_value(200e6),             "Sample rate (Hz) (default: 200e6)")
-        ("rx_freq", po::value<double>(&rx_freq)->default_value(3.2e9),          "RX center frequency (Hz) (default: 3.2e9)")
-        ("rx_gain", po::value<double>(&rx_gain)->default_value(30),             "RX gain (dB) (default: 30)")
-        ("rx_bw",   po::value<double>(&rx_bw)->default_value(160e6),            "RX bandwidth (Hz) (default: 160e6)")
+        ("rate",    po::value<double>(&rate)->default_value(200e6),             "Sample rate (Hz)")
+        ("rx_freq", po::value<double>(&rx_freq)->default_value(3.2e9),          "RX center frequency (Hz)")
+        ("rx_gain", po::value<double>(&rx_gain)->default_value(30),             "RX gain (dB)")
+        ("rx_bw",   po::value<double>(&rx_bw)->default_value(160e6),            "RX bandwidth (Hz)")
         ("rx_ant",  po::value<std::string>(&rx_ant)->default_value("TX/RX"),    "RX antenna")
         // ("radio_src_port", po::value<size_t>(&radio_src_port)->default_value(0), "Radio radio_src_port index to use")
 
@@ -104,9 +104,9 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
         ("format",      po::value<std::string>(&format)->default_value("sc16"),     "Output file sample format: sc16 or fc32 or int32")
 
         // Schmidl & Cox block parameters (only used if datapath=schmidl_cox)
-        ("sc_threshold",    po::value<uint32_t>(&sc_threshold)->default_value(0x00200000),  "Schmidl & Cox threshold register value")
-        ("sc_packet_size",  po::value<uint32_t>(&sc_packet_size)->default_value(2304),      "Schmidl & Cox packet size register value")
-        ("sc_output_select", po::value<uint32_t>(&sc_output_select)->default_value(0),      "Schmidl & Cox output select register value")
+        ("sc_threshold",    po::value<uint32_t>(&sc_threshold)->default_value(0x00200000),  "Schmidl & Cox threshold value")
+        ("sc_packet_size",  po::value<uint32_t>(&sc_packet_size)->default_value(2304),      "Schmidl & Cox packet size value")
+        ("sc_output_select", po::value<uint32_t>(&sc_output_select)->default_value(0),      "Schmidl & Cox output select value (0b00: signal with 0, 0b01: valid signal, 0b10: metricMSB, 0b11: metricLSB)")
     ;
 
     // Parse command-line options
@@ -131,12 +131,12 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
         std::cerr << "Error: Invalid output format '" << format << "'. Must be 'sc16' or 'fc32' or 'int32'." << std::endl;
         return EXIT_FAILURE;
     }
-    if (sc_output_select != 0 && format != "int32") {
-        std::cerr << "Error: Invalid output format '" << format << "' for Schmidl & Cox output select != 0. Must be 'int32'." << std::endl;
+    if (sc_output_select > 1 && format != "int32") {
+        std::cerr << "Error: Invalid output format '" << format << "' for Schmidl & Cox output select {2, 3}. Must be 'int32'." << std::endl;
         return EXIT_FAILURE;
     }
-    if (format == "int32" && sc_output_select == 0) {
-        std::cerr << "Error: Invalid output format '" << format << "' for Schmidl & Cox output select 0. Must be 'sc16' or 'fc32'." << std::endl;
+    if (format == "int32" && sc_output_select < 2) {
+        std::cerr << "Error: Invalid output format '" << format << "' for Schmidl & Cox output select {0, 1}. Must be 'sc16' or 'fc32'." << std::endl;
         return EXIT_FAILURE;
     }
     cpu_format = format;
@@ -148,6 +148,8 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
         output_info = "";
     } else {
         if (sc_output_select == 0b00) {
+            output_info = "signal_with_zeros.";
+        } else if (sc_output_select == 0b01) {
             output_info = "signal.";
         } else if (sc_output_select == 0b10) {
             output_info = "metricMSB.";

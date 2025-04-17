@@ -33,7 +33,8 @@ module detector #(
 // Number of samples after the peak to be at CP/2 of the 1st OFDM symbol
 localparam int MAX_COUNT = HALF_FFT_SIZE + HALPH_CP_SIZE; 
 
-logic metric_ready;
+logic fsm_ready;
+logic is_last_forwarded_sample;
 
 // States
 logic[31:0] max_val;
@@ -58,14 +59,16 @@ always @(posedge clk) begin
     max_val_counter <= MAX_COUNT;
     nbr_forwarded_samples <= 0;
     is_valid <= 0;
-    metric_ready <= 0;
+    fsm_ready <= 0;
+    is_last_forwarded_sample <= 0;
   end
 
   // State transitions
   else begin
-    metric_ready <= 1;
-    case (current_state)
+    fsm_ready <= 1;
+    is_last_forwarded_sample <= 0; // By default, not the last sample
 
+    case (current_state)
       // Searching state: waiting for metric to exceed threshold
       SEARCHING: begin
         if (m_tvalid) begin
@@ -136,6 +139,9 @@ always @(posedge clk) begin
             current_state <= FORWARDING;
             max_val <= 0;
             max_val_counter <= MAX_COUNT;
+            if (nbr_forwarded_samples + 1 == packet_length) begin
+              is_last_forwarded_sample <= 1; // Last sample to be forwarded
+            end 
             nbr_forwarded_samples <= nbr_forwarded_samples + 1;
             is_valid <= 1;
           end else begin
@@ -154,20 +160,57 @@ always @(posedge clk) begin
         max_val_counter <= MAX_COUNT;
         nbr_forwarded_samples <= 0;
         is_valid <= 0;
+        is_last_forwarded_sample <= 0;
       end
     endcase
   end
 end
 
-// Output signal generation (the is_valid signal is used to indicate the valid samples)
-// assign o_tdata = i_tdata; // => THIS IS THE RIGHT WAY TO DO
-assign o_tdata = output_select == 2'b00 ? (is_valid ? i_tdata : 0) : (output_select == 2'b10 ? {m_tdata[M_TDATA_WIDTH-1:M_TDATA_WIDTH-32]} : m_tdata[31:0]);
-assign o_tlast = i_tlast;
-// assign o_tvalid = i_tvalid & is_valid; // => THIS IS THE RIGHT WAY TO DO
-assign o_tvalid = i_tvalid;
-assign i_tready = o_tready;
+// New output logic
+logic [31:0] selected_o_tdata;
+logic selected_o_tvalid;
+logic selected_o_tlast;
 
-// Metric output generation
-assign m_tready = metric_ready;
+always_comb begin
+  // Default values
+  selected_o_tdata = 32'b0;
+  selected_o_tvalid = 0;
+  selected_o_tlast = 0;
+
+  case (output_select)
+    2'b00: begin // i_tdata when valid, else 0 => same packet properties as i
+      selected_o_tdata = is_valid ? i_tdata : 32'b0;
+      selected_o_tvalid = i_tvalid;
+      selected_o_tlast = i_tlast;
+    end
+    2'b01: begin // i_tdata, only when valid
+      selected_o_tdata = i_tdata;
+      selected_o_tvalid = i_tvalid & is_valid;
+      selected_o_tlast = is_last_forwarded_sample;
+    end
+    2'b10: begin // metric MSB
+      selected_o_tdata = m_tdata[M_TDATA_WIDTH-1 -: 32];
+      selected_o_tvalid = m_tvalid;
+      selected_o_tlast = m_tlast;
+    end
+    2'b11: begin // metric LSB
+      selected_o_tdata = m_tdata[31:0];
+      selected_o_tvalid = m_tvalid;
+      selected_o_tlast = m_tlast;
+    end
+    default: begin
+      selected_o_tdata = 32'b0;
+      selected_o_tvalid = 0;
+      selected_o_tlast = 0;
+    end
+  endcase
+end
+
+assign o_tdata = selected_o_tdata;
+assign o_tvalid = selected_o_tvalid;
+assign o_tlast = selected_o_tlast;
+assign i_tready = o_tready & fsm_ready;
+assign m_tready = o_tready & fsm_ready;
+
 
 endmodule // detector

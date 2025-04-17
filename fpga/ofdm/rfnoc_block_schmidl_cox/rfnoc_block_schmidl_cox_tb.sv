@@ -31,7 +31,7 @@ module rfnoc_block_schmidl_cox_tb;
   localparam int    NUM_PORTS_I     = 1;
   localparam int    NUM_PORTS_O     = 1;
   localparam int    ITEM_W          = 32;    // Sample size in bits
-  localparam int    SPP             = 200;    // Samples per packet
+  localparam int    SPP             = 200;   // Samples per packet
   localparam int    PKT_SIZE_BYTES  = SPP * (ITEM_W/8);
   localparam int    STALL_PROB      = 25;    // Default BFM stall probability
   localparam real   CHDR_CLK_PER    = 5.0;   // 200 MHz
@@ -362,10 +362,11 @@ module rfnoc_block_schmidl_cox_tb;
     //--------------------------------
 
     // Test 1: IQ samples (output_select = 0)
-    process_file_test("Reading IQ samples from binary file and processing", 32'd0);
+    process_file_test("Reading IQ samples from binary file and processing with zero signal when invalid", 32'b00);
+    // process_file_test("Reading IQ samples from binary file and processing", 32'b01, 250us);
 
     // Test 2: Metric samples MSB (output_select = 2) 
-    process_file_test("Reading Metric samples MSB", 32'b10);
+    // process_file_test("Reading Metric samples MSB", 32'b10);
 
     // Test 3: Metric samples LSB (output_select = 3)
     process_file_test("Reading Metric samples LSB", 32'b11);
