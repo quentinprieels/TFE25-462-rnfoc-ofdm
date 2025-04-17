@@ -68,31 +68,29 @@ module rfnoc_block_schmidl_cox #(
   wire [19:0]        m_ctrlport_req_addr;
   wire [31:0]        m_ctrlport_req_data;
   reg                m_ctrlport_resp_ack;
-  reg  [31:0]        m_ctrlport_resp_data;
-  // Payload Stream to User Logic: in
-  wire [32*1-1:0]    m_in_payload_tdata;
-  wire [1-1:0]       m_in_payload_tkeep;
-  wire               m_in_payload_tlast;
-  wire               m_in_payload_tvalid;
-  wire               m_in_payload_tready;
-  // Context Stream to User Logic: in
-  wire [CHDR_W-1:0]  m_in_context_tdata;
-  wire [3:0]         m_in_context_tuser;
-  wire               m_in_context_tlast;
-  wire               m_in_context_tvalid;
-  wire               m_in_context_tready;
-  // Payload Stream from User Logic: out
-  wire [32*1-1:0]    s_out_payload_tdata;
-  wire [0:0]         s_out_payload_tkeep;
-  wire               s_out_payload_tlast;
-  wire               s_out_payload_tvalid;
-  wire               s_out_payload_tready;
-  // Context Stream from User Logic: out
-  wire [CHDR_W-1:0]  s_out_context_tdata;
-  wire [3:0]         s_out_context_tuser;
-  wire               s_out_context_tlast;
-  wire               s_out_context_tvalid;
-  wire               s_out_context_tready;
+  reg [31:0]         m_ctrlport_resp_data;
+  // Data Stream to User Logic: in
+  wire [32*1-1:0]    m_in_axis_tdata;
+  wire [1-1:0]       m_in_axis_tkeep;
+  wire               m_in_axis_tlast;
+  wire               m_in_axis_tvalid;
+  wire               m_in_axis_tready;
+  wire [63:0]        m_in_axis_ttimestamp;
+  wire               m_in_axis_thas_time;
+  wire [15:0]        m_in_axis_tlength;
+  wire               m_in_axis_teov;
+  wire               m_in_axis_teob;
+  // Data Stream from User Logic: out
+  wire [32*1-1:0]    s_out_axis_tdata;
+  wire [0:0]         s_out_axis_tkeep;
+  wire               s_out_axis_tlast;
+  wire               s_out_axis_tvalid;
+  wire               s_out_axis_tready;
+  logic [63:0]       s_out_axis_ttimestamp;
+  logic              s_out_axis_thas_time;
+  logic [15:0]       s_out_axis_tlength;
+  logic              s_out_axis_teov;
+  logic              s_out_axis_teob;
 
   //---------------------------------------------------------------------------
   // NoC Shell
@@ -151,33 +149,31 @@ module rfnoc_block_schmidl_cox #(
     .m_ctrlport_resp_ack       (m_ctrlport_resp_ack),
     .m_ctrlport_resp_data      (m_ctrlport_resp_data),
 
-    // AXI-Stream Payload Context Clock and Reset
+    // AXI-Stream Clock and Reset
     .axis_data_clk (axis_data_clk),
     .axis_data_rst (axis_data_rst),
-    // Payload Stream to User Logic: in
-    .m_in_payload_tdata  (m_in_payload_tdata),
-    .m_in_payload_tkeep  (m_in_payload_tkeep),
-    .m_in_payload_tlast  (m_in_payload_tlast),
-    .m_in_payload_tvalid (m_in_payload_tvalid),
-    .m_in_payload_tready (m_in_payload_tready),
-    // Context Stream to User Logic: in
-    .m_in_context_tdata  (m_in_context_tdata),
-    .m_in_context_tuser  (m_in_context_tuser),
-    .m_in_context_tlast  (m_in_context_tlast),
-    .m_in_context_tvalid (m_in_context_tvalid),
-    .m_in_context_tready (m_in_context_tready),
-    // Payload Stream from User Logic: out
-    .s_out_payload_tdata  (s_out_payload_tdata),
-    .s_out_payload_tkeep  (s_out_payload_tkeep),
-    .s_out_payload_tlast  (s_out_payload_tlast),
-    .s_out_payload_tvalid (s_out_payload_tvalid),
-    .s_out_payload_tready (s_out_payload_tready),
-    // Context Stream from User Logic: out
-    .s_out_context_tdata  (s_out_context_tdata),
-    .s_out_context_tuser  (s_out_context_tuser),
-    .s_out_context_tlast  (s_out_context_tlast),
-    .s_out_context_tvalid (s_out_context_tvalid),
-    .s_out_context_tready (s_out_context_tready),
+    // Data Stream to User Logic: in
+    .m_in_axis_tdata      (m_in_axis_tdata),
+    .m_in_axis_tkeep      (m_in_axis_tkeep),
+    .m_in_axis_tlast      (m_in_axis_tlast),
+    .m_in_axis_tvalid     (m_in_axis_tvalid),
+    .m_in_axis_tready     (m_in_axis_tready),
+    .m_in_axis_ttimestamp (m_in_axis_ttimestamp),
+    .m_in_axis_thas_time  (m_in_axis_thas_time),
+    .m_in_axis_tlength    (m_in_axis_tlength),
+    .m_in_axis_teov       (m_in_axis_teov),
+    .m_in_axis_teob       (m_in_axis_teob),
+    // Data Stream from User Logic: out
+    .s_out_axis_tdata      (s_out_axis_tdata),
+    .s_out_axis_tkeep      (s_out_axis_tkeep),
+    .s_out_axis_tlast      (s_out_axis_tlast),
+    .s_out_axis_tvalid     (s_out_axis_tvalid),
+    .s_out_axis_tready     (s_out_axis_tready),
+    .s_out_axis_ttimestamp (s_out_axis_ttimestamp),
+    .s_out_axis_thas_time  (s_out_axis_thas_time),
+    .s_out_axis_tlength    (s_out_axis_tlength),
+    .s_out_axis_teov       (s_out_axis_teov),
+    .s_out_axis_teob       (s_out_axis_teob),
 
     //---------------------------
     // RFNoC Backend Interface
@@ -261,6 +257,8 @@ module rfnoc_block_schmidl_cox #(
   wire m_tlast, m_tvalid, m_tready;
   wire [31:0] yl_tdata;
   wire yl_tlast, yl_tvalid, yl_tready;
+  wire [15:0] packet_len;
+  wire eob;
   metric_calculator # (
     .FFT_SIZE(FFT_SIZE),
     .CP_SIZE(CP_SIZE)  
@@ -270,10 +268,10 @@ module rfnoc_block_schmidl_cox #(
     .clear(1'b0),           // Used to reset only internal states of the module (not software defined registers)
 
     // Input signal
-    .i_tdata(m_in_payload_tdata),
-    .i_tlast(m_in_payload_tlast),
-    .i_tvalid(m_in_payload_tvalid),
-    .i_tready(m_in_payload_tready),
+    .i_tdata(m_in_axis_tdata),
+    .i_tlast(m_in_axis_tlast),
+    .i_tvalid(m_in_axis_tvalid),
+    .i_tready(m_in_axis_tready),
 
     // Metric output
     .m_tdata(m_tdata),
@@ -314,21 +312,70 @@ module rfnoc_block_schmidl_cox #(
     .i_tready(yl_tready),
 
     // Output signal
-    .o_tdata(s_out_payload_tdata),
-    .o_tlast(s_out_payload_tlast),
-    .o_tvalid(s_out_payload_tvalid),
-    .o_tready(s_out_payload_tready)
+    .o_tdata(s_out_axis_tdata),
+    .o_tlast(s_out_axis_tlast),
+    .o_tvalid(s_out_axis_tvalid),
+    .o_tready(s_out_axis_tready),
+
+    .end_of_ofdm_packet(eob),
+    .rfnoc_packet_length(packet_len)
   );
 
   // Only 1-sample per clock, so tkeep should always be asserted
-  assign s_out_payload_tkeep = 1'b1;
+  assign s_out_axis_tkeep = 1'b1;
 
-  // Dive data control signal unchanged
-  assign s_out_context_tdata  = m_in_context_tdata;
-  assign s_out_context_tuser  = m_in_context_tuser;
-  assign s_out_context_tlast  = m_in_context_tlast;
-  assign s_out_context_tvalid = m_in_context_tvalid;
-  assign m_in_context_tready  = s_out_context_tready;
+  // Add latency to the axi control signals
+  wire [63:0] out_ttimestamp;
+  wire out_thas_time;
+  wire [15:0] out_tlength;
+  wire out_teov;
+  wire out_teob;
+  axi_latency #(
+      .WIDTH(64+16+1+1+1),
+      .DELAY(87 + 1)
+  ) yl_latency (
+      .clk(axis_data_clk),
+      .reset(axis_data_rst),
+      .clear(1'b0),
+      
+      .s_axis_tdata({
+          m_in_axis_ttimestamp,
+          m_in_axis_thas_time,
+          m_in_axis_tlength,
+          m_in_axis_teov,
+          m_in_axis_teob
+      }),
+      .s_axis_tlast(1'b0),
+      .s_axis_tvalid(1'b0),
+      .s_axis_tready(),
+      
+      .m_axis_tdata({
+          out_ttimestamp,
+          out_thas_time,
+          out_tlength,
+          out_teov,
+          out_teob
+      }),
+      .m_axis_tlast(),
+      .m_axis_tvalid(),
+      .m_axis_tready(s_out_axis_tready)
+  );
+
+  always_comb begin
+    if (output_select == 2'b01) begin
+      s_out_axis_ttimestamp = out_ttimestamp;
+      s_out_axis_thas_time = out_thas_time;
+      s_out_axis_tlength = packet_len;
+      s_out_axis_teov = eob;
+      s_out_axis_teob = eob;
+    end else begin
+      s_out_axis_ttimestamp = out_ttimestamp;
+      s_out_axis_thas_time = out_thas_time;
+      s_out_axis_tlength = out_tlength;
+      s_out_axis_teov = out_teov;
+      s_out_axis_teob = out_teob;
+    end
+  end
 
 endmodule // rfnoc_block_schmidl_cox
 

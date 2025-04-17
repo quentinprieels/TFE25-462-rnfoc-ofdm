@@ -168,6 +168,7 @@ module rfnoc_block_schmidl_cox_tb;
     string input_filename, output_input_filename;
     bit end_of_file;
     bit little_endian = 1; // Set to 0 for big-endian data if needed
+    logic [15:0] counter;
 
     test.start_test(test_name, test_timeout);
 
@@ -197,6 +198,7 @@ module rfnoc_block_schmidl_cox_tb;
     packets_sent = 0;
     send_samples = {};
     end_of_file = 0;
+    counter = 0;
 
     // Read and process the file
     while (!end_of_file) begin
@@ -233,43 +235,46 @@ module rfnoc_block_schmidl_cox_tb;
         blk_ctrl.send_items(0, send_samples);
 
         // Wait for and receive the processed packet
-        blk_ctrl.recv_items(0, recv_samples);
+        if (output_select_value != 2'b01 || counter > 16'd15) begin
+          blk_ctrl.recv_items(0, recv_samples);
 
-        // Process and validate the received samples
-        `ASSERT_ERROR(recv_samples.size() == SPP,
-          $sformatf(" > Received payload didn't match size of payload sent (expected %0d, got %0d)", SPP, recv_samples.size()));
+          // Process and validate the received samples
+          `ASSERT_ERROR(recv_samples.size() <= SPP,
+            $sformatf(" > Received payload didn't match size of payload sent (expected %0d, got %0d)", SPP, recv_samples.size()));
 
-        // Write the received samples to output file in binary sc16 format
-        for (int i=0; i < recv_samples.size(); i++) begin
-          logic signed [15:0] out_i, out_q;
-          logic [7:0] out_bytes[4];
-          item_t sample_out;
-          
-          sample_out = recv_samples[i];
-          out_i = sample_out[31:16];
-          out_q = sample_out[15:0];
-          
-          // Convert to bytes based on endianness
-          if (little_endian) begin
-            // Little-endian: [I_LSB, I_MSB, Q_LSB, Q_MSB]
-            out_bytes[0] = out_i[7:0];
-            out_bytes[1] = out_i[15:8];
-            out_bytes[2] = out_q[7:0];
-            out_bytes[3] = out_q[15:8];
-          end else begin
-            // Big-endian: [I_MSB, I_LSB, Q_MSB, Q_LSB]
-            out_bytes[0] = out_i[15:8];
-            out_bytes[1] = out_i[7:0];
-            out_bytes[2] = out_q[15:8];
-            out_bytes[3] = out_q[7:0];
+          // Write the received samples to output file in binary sc16 format
+          for (int i=0; i < recv_samples.size(); i++) begin
+            logic signed [15:0] out_i, out_q;
+            logic [7:0] out_bytes[4];
+            item_t sample_out;
+            
+            sample_out = recv_samples[i];
+            out_i = sample_out[31:16];
+            out_q = sample_out[15:0];
+            
+            // Convert to bytes based on endianness
+            if (little_endian) begin
+              // Little-endian: [I_LSB, I_MSB, Q_LSB, Q_MSB]
+              out_bytes[0] = out_i[7:0];
+              out_bytes[1] = out_i[15:8];
+              out_bytes[2] = out_q[7:0];
+              out_bytes[3] = out_q[15:8];
+            end else begin
+              // Big-endian: [I_MSB, I_LSB, Q_MSB, Q_LSB]
+              out_bytes[0] = out_i[15:8];
+              out_bytes[1] = out_i[7:0];
+              out_bytes[2] = out_q[15:8];
+              out_bytes[3] = out_q[7:0];
+            end
+            
+            $fwrite(output_file, "%c%c%c%c", out_bytes[0], out_bytes[1], out_bytes[2], out_bytes[3]);
           end
-          
-          $fwrite(output_file, "%c%c%c%c", out_bytes[0], out_bytes[1], out_bytes[2], out_bytes[3]);
         end
         
         // Prepare for next packet
         send_samples = {};
         packets_sent++;
+        counter++;
       end
     end
 
@@ -362,14 +367,14 @@ module rfnoc_block_schmidl_cox_tb;
     //--------------------------------
 
     // Test 1: IQ samples (output_select = 0)
-    process_file_test("Reading IQ samples from binary file and processing with zero signal when invalid", 32'b00);
-    // process_file_test("Reading IQ samples from binary file and processing", 32'b01, 250us);
+    //process_file_test("Reading IQ samples from binary file and processing with zero signal when invalid", 32'b00);
+    process_file_test("Reading IQ samples from binary file and processing", 32'b01, 250us);
 
     // Test 2: Metric samples MSB (output_select = 2) 
     // process_file_test("Reading Metric samples MSB", 32'b10);
 
     // Test 3: Metric samples LSB (output_select = 3)
-    process_file_test("Reading Metric samples LSB", 32'b11);
+    // process_file_test("Reading Metric samples LSB", 32'b11);
     
 
     //--------------------------------

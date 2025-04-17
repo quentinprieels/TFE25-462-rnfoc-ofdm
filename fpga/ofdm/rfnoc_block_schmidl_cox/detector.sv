@@ -8,6 +8,7 @@ module detector #(
   input reset, 
   input clear,
 
+  // Configuration inputs
   input [31:0] threshold,     // Threshold for detection
   input [31:0] packet_length, // Length of the packet
   input [1:0]  output_select, // Output select signal (00: signal, 10: metric MSB, 11: metric LSB)
@@ -27,7 +28,11 @@ module detector #(
   output [31:0] o_tdata,
   output o_tlast,
   output o_tvalid,
-  input o_tready
+  input o_tready,
+
+  // Signaling ouputs
+  output end_of_ofdm_packet,
+  output [15:0] rfnoc_packet_length
 );
 
 // Number of samples after the peak to be at CP/2 of the 1st OFDM symbol
@@ -40,6 +45,7 @@ logic is_last_forwarded_sample;
 logic[31:0] max_val;
 logic[31:0] max_val_counter;
 logic[31:0] nbr_forwarded_samples;
+logic[15:0] rfnoc_packet_length_val;
 logic is_valid;
 typedef enum logic[1:0] {
   SEARCHING = 0,  // 00
@@ -61,6 +67,7 @@ always @(posedge clk) begin
     is_valid <= 0;
     fsm_ready <= 0;
     is_last_forwarded_sample <= 0;
+    rfnoc_packet_length_val <= 16'd1;
   end
 
   // State transitions
@@ -78,12 +85,14 @@ always @(posedge clk) begin
             max_val_counter <= MAX_COUNT - 1;
             nbr_forwarded_samples <= 0;
             is_valid <= 0;
+            rfnoc_packet_length_val <= 16'd1;
           end else begin
             current_state <= SEARCHING;
             max_val <= 0;
             max_val_counter <= MAX_COUNT;
             nbr_forwarded_samples <= 0;
             is_valid <= 0;
+            rfnoc_packet_length_val <= 16'd1;
           end
         end
       end
@@ -95,6 +104,7 @@ always @(posedge clk) begin
         if (m_tvalid) begin
           if (m_tdata > threshold) begin
             current_state <= DETECTING;
+            rfnoc_packet_length_val <= 16'd1;
 
             // Check if the maximum value is reached
             if (m_tdata >= max_val) begin
@@ -122,12 +132,14 @@ always @(posedge clk) begin
             max_val_counter <= max_val_counter - 1;
             nbr_forwarded_samples <= 0;
             is_valid <= 0;
+            rfnoc_packet_length_val <= 16'd1;
           end else begin
             current_state <= FORWARDING; // Start forwarding
             max_val <= 0;
             max_val_counter <= MAX_COUNT;
             nbr_forwarded_samples <= 1;
             is_valid <= 1;
+            rfnoc_packet_length_val <= 16'd1;
           end
         end
       end
@@ -141,7 +153,12 @@ always @(posedge clk) begin
             max_val_counter <= MAX_COUNT;
             if (nbr_forwarded_samples + 1 == packet_length) begin
               is_last_forwarded_sample <= 1; // Last sample to be forwarded
-            end 
+            end
+            if (i_tlast) begin
+              rfnoc_packet_length_val <= 16'd1;
+            end else begin
+              rfnoc_packet_length_val <= rfnoc_packet_length_val + 1;
+            end
             nbr_forwarded_samples <= nbr_forwarded_samples + 1;
             is_valid <= 1;
           end else begin
@@ -150,6 +167,8 @@ always @(posedge clk) begin
             max_val_counter <= MAX_COUNT;
             nbr_forwarded_samples <= 0;
             is_valid <= 0;
+            is_last_forwarded_sample <= 0;
+            rfnoc_packet_length_val <= 16'd1;
           end
         end
       end
@@ -161,6 +180,7 @@ always @(posedge clk) begin
         nbr_forwarded_samples <= 0;
         is_valid <= 0;
         is_last_forwarded_sample <= 0;
+        rfnoc_packet_length_val <= 16'd1;
       end
     endcase
   end
@@ -211,6 +231,7 @@ assign o_tvalid = selected_o_tvalid;
 assign o_tlast = selected_o_tlast;
 assign i_tready = o_tready & fsm_ready;
 assign m_tready = o_tready & fsm_ready;
-
+assign end_of_ofdm_packet = is_last_forwarded_sample;
+assign rfnoc_packet_length = rfnoc_packet_length_val;
 
 endmodule // detector
