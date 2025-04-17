@@ -195,16 +195,20 @@ module rfnoc_block_schmidl_cox #(
   //-------------------------------------
   localparam REG_THRESHOLD_ADDR = 0;
   localparam REG_PACKET_SIZE_ADDR = 1;
+  localparam REG_OUTPUT_SELECT_ADDR = 2;
   localparam logic [31:0] REG_THRESHOLD_DEFAULT = 32'h02000000;
   localparam logic [31:0] REG_PACKET_SIZE_DEFAULT = 32'd2304;
+  localparam logic REG_OUTPUT_SELECT_DEFAULT = 2'b0;
 
   reg [31:0] threshold = REG_THRESHOLD_DEFAULT;
   reg [31:0] packet_size = REG_PACKET_SIZE_DEFAULT;
+  reg [1:0]  output_select = REG_OUTPUT_SELECT_DEFAULT;
 
   always @(posedge ctrlport_clk) begin
     if (ctrlport_rst) begin
       threshold <= REG_THRESHOLD_DEFAULT;
       packet_size <= REG_PACKET_SIZE_DEFAULT;
+      output_select <= REG_OUTPUT_SELECT_DEFAULT;
     end else begin
       // Default assignment
       m_ctrlport_resp_ack <= 0;
@@ -220,6 +224,10 @@ module rfnoc_block_schmidl_cox #(
             m_ctrlport_resp_data <= packet_size;
             m_ctrlport_resp_ack <= 1;
           end
+          REG_OUTPUT_SELECT_ADDR: begin
+            m_ctrlport_resp_data <= {31'b0, output_select};
+            m_ctrlport_resp_ack <= 1;
+          end
         endcase
       end
 
@@ -232,6 +240,10 @@ module rfnoc_block_schmidl_cox #(
           end
           REG_PACKET_SIZE_ADDR: begin
             packet_size <= m_ctrlport_req_data;
+            m_ctrlport_resp_ack <= 1;
+          end
+          REG_OUTPUT_SELECT_ADDR: begin
+            output_select <= m_ctrlport_req_data[1:0];
             m_ctrlport_resp_ack <= 1;
           end
         endcase
@@ -287,6 +299,7 @@ module rfnoc_block_schmidl_cox #(
 
     .threshold(threshold),
     .packet_length(packet_size),
+    .output_select(output_select),
 
     // Metric input
     .m_tdata(m_tdata),

@@ -8,8 +8,9 @@ module detector #(
   input reset, 
   input clear,
 
-  input [31:0] threshold, // Threshold for detection
+  input [31:0] threshold,     // Threshold for detection
   input [31:0] packet_length, // Length of the packet
+  input [1:0]  output_select, // Output select signal (00: signal, 10: metric MSB, 11: metric LSB)
 
   // Metric input
   input [M_TDATA_WIDTH-1:0] m_tdata, 
@@ -160,7 +161,7 @@ end
 
 // Output signal generation (the is_valid signal is used to indicate the valid samples)
 // assign o_tdata = i_tdata; // => THIS IS THE RIGHT WAY TO DO
-assign o_tdata = is_valid ? i_tdata : 0;
+assign o_tdata = output_select == 2'b00 ? (is_valid ? i_tdata : 0) : (output_select == 2'b10 ? {m_tdata[M_TDATA_WIDTH-1:M_TDATA_WIDTH-32]} : m_tdata[31:0]);
 assign o_tlast = i_tlast;
 // assign o_tvalid = i_tvalid & is_valid; // => THIS IS THE RIGHT WAY TO DO
 assign o_tvalid = i_tvalid;
@@ -170,4 +171,3 @@ assign i_tready = o_tready;
 assign m_tready = metric_ready;
 
 endmodule // detector
-

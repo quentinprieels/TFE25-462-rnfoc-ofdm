@@ -23,6 +23,7 @@
 namespace po = boost::program_options;
 using vec_complex_float = std::vector<std::complex<float>>;
 using vec_complex_int16 = std::vector<std::complex<int16_t>>;
+using vec_int32 = std::vector<int32_t>;
 
 // Function to check if a sensor is locked (optional but good practice)
 typedef std::function<uhd::sensor_value_t(const std::string&)> get_sensor_fn_t;
@@ -69,10 +70,10 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
     //--------------------------------------------------------------------------
 
     // Variable to be set by po
-    std::string args, filename, rx_ant, ref, datapath, format, cpu_format, wire_format;
+    std::string args, filename, rx_ant, ref, datapath, format, cpu_format, wire_format, output_info;
     double rate, rx_freq, rx_gain, rx_bw, setup_time, seconds_betw_meas;
     size_t total_num_samps, nbr_meas;
-    uint32_t sc_threshold = 0, sc_packet_size = 0; // Default values might need adjustment
+    uint32_t sc_threshold = 0, sc_packet_size = 0, sc_output_select = 0;
     bool use_schmidl_cox = false;
 
     po::options_description desc("Allowed options");
@@ -100,11 +101,12 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
         
         // Datapath and format
         ("datapath",    po::value<std::string>(&datapath)->default_value("raw"),    "Datapath: 'raw' (radio->ddc->host) or 'schmidl_cox' (radio->ddc->sc->host)")
-        ("format",      po::value<std::string>(&format)->default_value("sc16"),     "Output file sample format: sc16 or fc32")
+        ("format",      po::value<std::string>(&format)->default_value("sc16"),     "Output file sample format: sc16 or fc32 or int32")
 
         // Schmidl & Cox block parameters (only used if datapath=schmidl_cox)
-        ("sc_threshold",    po::value<uint32_t>(&sc_threshold),     "Schmidl & Cox threshold register value")
-        ("sc_packet_size",  po::value<uint32_t>(&sc_packet_size),   "Schmidl & Cox packet size register value")
+        ("sc_threshold",    po::value<uint32_t>(&sc_threshold)->default_value(0x00200000),  "Schmidl & Cox threshold register value")
+        ("sc_packet_size",  po::value<uint32_t>(&sc_packet_size)->default_value(2304),      "Schmidl & Cox packet size register value")
+        ("sc_output_select", po::value<uint32_t>(&sc_output_select)->default_value(0),      "Schmidl & Cox output select register value")
     ;
 
     // Parse command-line options
@@ -125,12 +127,37 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
     // Validate and set options
     use_schmidl_cox = (datapath == "schmidl_cox");
 
-    if (format != "sc16" && format != "fc32") {
-        std::cerr << "Error: Invalid output format '" << format << "'. Must be 'sc16' or 'fc32'." << std::endl;
+    if (format != "sc16" && format != "fc32" && format != "int32") {
+        std::cerr << "Error: Invalid output format '" << format << "'. Must be 'sc16' or 'fc32' or 'int32'." << std::endl;
         return EXIT_FAILURE;
     }
-    cpu_format = format; // Request samples from UHD in the desired output format
+    if (sc_output_select != 0 && format != "int32") {
+        std::cerr << "Error: Invalid output format '" << format << "' for Schmidl & Cox output select != 0. Must be 'int32'." << std::endl;
+        return EXIT_FAILURE;
+    }
+    if (format == "int32" && sc_output_select == 0) {
+        std::cerr << "Error: Invalid output format '" << format << "' for Schmidl & Cox output select 0. Must be 'sc16' or 'fc32'." << std::endl;
+        return EXIT_FAILURE;
+    }
+    cpu_format = format;
+    if (format == "int32") {
+        cpu_format = "sc16"; // Use sc16 for int16 format (it will be converted later)
+    }
 
+    if (datapath == "raw") {
+        output_info = "";
+    } else {
+        if (sc_output_select == 0b00) {
+            output_info = "signal.";
+        } else if (sc_output_select == 0b10) {
+            output_info = "metricMSB.";
+        } else if (sc_output_select == 0b11) {
+            output_info = "metricLSB.";
+        } else {
+            std::cerr << "Error: Invalid output select value: " << sc_output_select << std::endl;
+            return EXIT_FAILURE;
+        }
+    }
 
 
     //--------------------------------------------------------------------------
@@ -239,9 +266,9 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
         // Threshold
         if (vm.count("sc_threshold")) {
             std::cout << boost::format("Setting SC Threshold: 0x%08X (%u)...") % sc_threshold % sc_threshold << std::endl;
-            sc_ctrl->set_threshold_value(sc_threshold);
+            sc_ctrl->set_threshold(sc_threshold);
         }
-        uint32_t read_thresh = sc_ctrl->get_threshold_value();
+        uint32_t read_thresh = sc_ctrl->get_threshold();
         std::cout << boost::format("Read back SC Threshold: 0x%08X (%u)") % read_thresh % read_thresh << std::endl;
 
         // Packet Size
@@ -251,6 +278,14 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
         }
         uint32_t read_packet_size = sc_ctrl->get_packet_size();
         std::cout << boost::format("Read back SC Packet Size: 0x%08X (%u)") % read_packet_size % read_packet_size << std::endl;
+
+        // Output Select
+        if (vm.count("sc_output_select")) {
+            std::cout << boost::format("Setting SC Output Select: 0x%08X (%u)...") % sc_output_select % sc_output_select << std::endl;
+            sc_ctrl->set_output_select(sc_output_select);
+        }
+        uint32_t read_output_select = sc_ctrl->get_output_select();
+        std::cout << boost::format("Read back SC Output Select: 0x%08X (%u)") % read_output_select % read_output_select << std::endl;
     }
 
     // Allow settings to settle
@@ -315,7 +350,7 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
     // Receive Loop
     //--------------------------------------------------------------------------
 
-    std::string out_filename = filename + "_" + datapath + "." + format + ".dat";
+    std::string out_filename = filename + "_" + datapath + "." + output_info + format + ".dat";
     std::cout << "Opening output file: " << out_filename << std::endl;
     std::ofstream outfile(out_filename, std::ios::binary);
     if (!outfile) {
@@ -381,10 +416,23 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
             // Write samples to file
             if (num_rx_samps > 0) {
                 size_t samps_to_write = std::min(num_rx_samps, total_num_samps - current_meas_samps);
-                if (cpu_format == "fc32") {
+                if (format == "fc32") {
                     outfile.write(reinterpret_cast<const char*>(buff_fc32.data()), samps_to_write * sizeof(std::complex<float>));
-                } else { // sc16
+                } else if (format == "sc16") {
                     outfile.write(reinterpret_cast<const char*>(buff_sc16.data()), samps_to_write * sizeof(std::complex<int16_t>));
+                } else if (format == "int32") {
+                    // Convert complex<int16_t> to int32_t by combining real and imaginary parts
+                    std::vector<int32_t> int32_buff(samps_to_write);
+                    for (size_t i = 0; i < samps_to_write; ++i) {
+                        // Combine real (upper 16 bits) and imaginary (lower 16 bits) parts
+                        int32_t real_part = static_cast<int32_t>(buff_sc16[i].real()) & 0xFFFF;
+                        int32_t imag_part = static_cast<int32_t>(buff_sc16[i].imag()) & 0xFFFF;
+                        int32_buff[i] = (real_part << 16) | imag_part;
+                    }
+                    outfile.write(reinterpret_cast<const char*>(int32_buff.data()), samps_to_write * sizeof(int32_t));
+                } else {
+                    std::cerr << "Error: Unsupported format for writing samples." << std::endl;
+                    return EXIT_FAILURE;
                 }
                 current_meas_samps += samps_to_write;
                 total_samps_received += samps_to_write; // Track overall total if needed

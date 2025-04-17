@@ -31,7 +31,7 @@ module rfnoc_block_schmidl_cox_tb;
   localparam int    NUM_PORTS_I     = 1;
   localparam int    NUM_PORTS_O     = 1;
   localparam int    ITEM_W          = 32;    // Sample size in bits
-  localparam int    SPP             = 64;    // Samples per packet
+  localparam int    SPP             = 200;    // Samples per packet
   localparam int    PKT_SIZE_BYTES  = SPP * (ITEM_W/8);
   localparam int    STALL_PROB      = 25;    // Default BFM stall probability
   localparam real   CHDR_CLK_PER    = 5.0;   // 200 MHz
@@ -152,6 +152,134 @@ module rfnoc_block_schmidl_cox_tb;
 
   localparam int REG_PACKET_SIZE_ADDR = dut.REG_PACKET_SIZE_ADDR;
   localparam int REG_THRESHOLD_ADDR   = dut.REG_THRESHOLD_ADDR;
+  localparam int REG_OUTPUT_SELECT_ADDR = dut.REG_OUTPUT_SELECT_ADDR;
+
+  task automatic process_file_test(
+    input string test_name,
+    input logic [31:0] output_select_value,
+    input time test_timeout = 250us
+  );
+    item_t send_samples[$];
+    item_t recv_samples[$];
+    logic signed [15:0] i_sample, q_sample;
+    int input_file, output_file, num_samples, status, packets_sent;
+    logic [7:0] read_buffer[4]; // Buffer for one I/Q sample pair (4 bytes total)
+    int bytes_read;
+    string input_filename, output_input_filename;
+    bit end_of_file;
+    bit little_endian = 1; // Set to 0 for big-endian data if needed
+
+    test.start_test(test_name, test_timeout);
+
+    // Configure the block
+    blk_ctrl.reg_write(REG_PACKET_SIZE_ADDR, 32'd2304);
+    blk_ctrl.reg_write(REG_THRESHOLD_ADDR, 32'h00200000);
+    blk_ctrl.reg_write(REG_OUTPUT_SELECT_ADDR, output_select_value);
+    
+    // File containing IQ samples in sc16 format
+    input_filename = "/export/home/usrpconfig/Documents/GitHub/TFE25-462/rfnoc-ofdm/tests/rx_samples_raw.sc16.dat";
+    output_input_filename = "/export/home/usrpconfig/Documents/GitHub/TFE25-462/rfnoc-ofdm/tests/rx_samples_raw_out.sc16.dat";
+
+    // Open the input file for reading in binary mode
+    input_file = $fopen(input_filename, "rb");
+    if (input_file == 0) begin
+      `ASSERT_ERROR(0, $sformatf(" > Failed to open file %s", input_filename));
+    end
+
+    // Open the output file for writing in binary mode
+    output_file = $fopen(output_input_filename, "wb");
+    if (output_file == 0) begin
+      `ASSERT_ERROR(0, $sformatf(" > Failed to open file %s", output_input_filename));
+    end
+
+    // Initialize variables
+    num_samples = 0;
+    packets_sent = 0;
+    send_samples = {};
+    end_of_file = 0;
+
+    // Read and process the file
+    while (!end_of_file) begin
+      // Read 4 bytes at a time (one I/Q sample pair)
+      bytes_read = $fread(read_buffer, input_file);
+      
+      if (bytes_read != 4) begin
+        end_of_file = 1;
+      end else begin
+        // Convert bytes to samples based on endianness
+        if (little_endian) begin
+          // Little-endian: [I_LSB, I_MSB, Q_LSB, Q_MSB]
+          i_sample = $signed({read_buffer[1], read_buffer[0]});
+          q_sample = $signed({read_buffer[3], read_buffer[2]});
+        end else begin
+          // Big-endian: [I_MSB, I_LSB, Q_MSB, Q_LSB]
+          i_sample = $signed({read_buffer[0], read_buffer[1]});
+          q_sample = $signed({read_buffer[2], read_buffer[3]});
+        end
+        
+        send_samples.push_back({i_sample, q_sample});
+        num_samples++;
+      end
+
+      // When we have SPP samples or reached end of file, send the packet
+      if (send_samples.size() >= SPP || (end_of_file && send_samples.size() > 0)) begin
+        // Pad with zeros if we don't have enough samples
+        while (send_samples.size() < SPP) begin
+          send_samples.push_back({16'(0), 16'(0)}); // Pad with zeros
+        end
+
+        // Send the packet
+        $display(" > Sending packet %0d with %0d samples", packets_sent, send_samples.size());
+        blk_ctrl.send_items(0, send_samples);
+
+        // Wait for and receive the processed packet
+        blk_ctrl.recv_items(0, recv_samples);
+
+        // Process and validate the received samples
+        `ASSERT_ERROR(recv_samples.size() == SPP,
+          $sformatf(" > Received payload didn't match size of payload sent (expected %0d, got %0d)", SPP, recv_samples.size()));
+
+        // Write the received samples to output file in binary sc16 format
+        for (int i=0; i < recv_samples.size(); i++) begin
+          logic signed [15:0] out_i, out_q;
+          logic [7:0] out_bytes[4];
+          item_t sample_out;
+          
+          sample_out = recv_samples[i];
+          out_i = sample_out[31:16];
+          out_q = sample_out[15:0];
+          
+          // Convert to bytes based on endianness
+          if (little_endian) begin
+            // Little-endian: [I_LSB, I_MSB, Q_LSB, Q_MSB]
+            out_bytes[0] = out_i[7:0];
+            out_bytes[1] = out_i[15:8];
+            out_bytes[2] = out_q[7:0];
+            out_bytes[3] = out_q[15:8];
+          end else begin
+            // Big-endian: [I_MSB, I_LSB, Q_MSB, Q_LSB]
+            out_bytes[0] = out_i[15:8];
+            out_bytes[1] = out_i[7:0];
+            out_bytes[2] = out_q[15:8];
+            out_bytes[3] = out_q[7:0];
+          end
+          
+          $fwrite(output_file, "%c%c%c%c", out_bytes[0], out_bytes[1], out_bytes[2], out_bytes[3]);
+        end
+        
+        // Prepare for next packet
+        send_samples = {};
+        packets_sent++;
+      end
+    end
+
+    // Close the file
+    $fclose(input_file);
+    $fclose(output_file);
+
+    $display(" > Processed %0d samples in %0d packets", num_samples, packets_sent);
+    test.end_test();
+  endtask
 
   initial begin : tb_main
     // Dump VCD file for waveform debugging
@@ -188,32 +316,42 @@ module rfnoc_block_schmidl_cox_tb;
     //--------------------------------
     begin
       // Read an write the packet_length register and the threshold register
-      logic [31:0] packet_length, threshold;
+      logic [31:0] packet_length, threshold, output_select;
       test.start_test("Read and write registers", 2us);
       
       blk_ctrl.reg_read(REG_PACKET_SIZE_ADDR, packet_length);
       blk_ctrl.reg_read(REG_THRESHOLD_ADDR, threshold);
+      blk_ctrl.reg_read(REG_OUTPUT_SELECT_ADDR, output_select);
       `ASSERT_ERROR(
         packet_length == dut.REG_PACKET_SIZE_DEFAULT, "Incorrect default packet_length register value"
       );
       `ASSERT_ERROR(
         threshold == dut.REG_THRESHOLD_DEFAULT, "Incorrect default threshold register value"
       );
+      `ASSERT_ERROR(
+        output_select == dut.REG_OUTPUT_SELECT_DEFAULT, "Incorrect default output_select register value"
+      );
 
       // Write new values to the registers
       packet_length = 1024;
       threshold = 100;
+      output_select = 3;
       blk_ctrl.reg_write(REG_PACKET_SIZE_ADDR, packet_length);
       blk_ctrl.reg_write(REG_THRESHOLD_ADDR, threshold);
+      blk_ctrl.reg_write(REG_OUTPUT_SELECT_ADDR, output_select);
 
       // Read back the values to verify
       blk_ctrl.reg_read(REG_PACKET_SIZE_ADDR, packet_length);
       blk_ctrl.reg_read(REG_THRESHOLD_ADDR, threshold);
+      blk_ctrl.reg_read(REG_OUTPUT_SELECT_ADDR, output_select);
       `ASSERT_ERROR(
         packet_length == 1024, "Incorrect packet_length register value after write"
       );
       `ASSERT_ERROR(
         threshold == 100, "Incorrect threshold register value after write"
+      );
+      `ASSERT_ERROR(
+        output_select == 3, "Incorrect output_select register value after write"
       );
 
       test.end_test();
@@ -223,128 +361,15 @@ module rfnoc_block_schmidl_cox_tb;
     // Test Detection
     //--------------------------------
 
-    // Send file to block
-    begin
-      item_t send_samples[$];
-      item_t recv_samples[$];
-      logic signed [15:0] i_sample, q_sample;
-      int input_file, output_file, num_samples, status, packets_sent;
-      logic [7:0] read_buffer[4]; // Buffer for one I/Q sample pair (4 bytes total)
-      int bytes_read;
-      string input_filename, output_input_filename;
-      bit end_of_file;
-      bit little_endian = 1; // Set to 0 for big-endian data if needed
+    // Test 1: IQ samples (output_select = 0)
+    process_file_test("Reading IQ samples from binary file and processing", 32'd0);
 
-      test.start_test("Reading IQ samples from binary file and processing", 250us);
+    // Test 2: Metric samples MSB (output_select = 2) 
+    process_file_test("Reading Metric samples MSB", 32'b10);
 
-      // Configure the block
-      blk_ctrl.reg_write(REG_PACKET_SIZE_ADDR, 32'd2304);
-      blk_ctrl.reg_write(REG_THRESHOLD_ADDR, 32'h00200000);
-      
-      // File containing IQ samples in sc16 format
-      input_filename = "/export/home/usrpconfig/Documents/GitHub/TFE25-462/rfnoc-ofdm/tests/rx_samples_raw.sc16.dat";
-      output_input_filename = "/export/home/usrpconfig/Documents/GitHub/TFE25-462/rfnoc-ofdm/tests/rx_samples_raw_out.sc16.dat";
-
-      // Open the input file for reading in binary mode
-      input_file = $fopen(input_filename, "rb");
-      if (input_file == 0) begin
-        `ASSERT_ERROR(0, $sformatf("Failed to open file %s", input_filename));
-      end
-
-      // Open the output file for writing in binary mode
-      output_file = $fopen(output_input_filename, "wb");
-      if (output_file == 0) begin
-        `ASSERT_ERROR(0, $sformatf("Failed to open file %s", output_input_filename));
-      end
-
-      // Initialize variables
-      num_samples = 0;
-      packets_sent = 0;
-      send_samples = {};
-      end_of_file = 0;
-
-      // Read and process the file
-      while (!end_of_file) begin
-        // Read 4 bytes at a time (one I/Q sample pair)
-        bytes_read = $fread(read_buffer, input_file);
-        
-        if (bytes_read != 4) begin
-          end_of_file = 1;
-        end else begin
-          // Convert bytes to samples based on endianness
-          if (little_endian) begin
-            // Little-endian: [I_LSB, I_MSB, Q_LSB, Q_MSB]
-            i_sample = $signed({read_buffer[1], read_buffer[0]});
-            q_sample = $signed({read_buffer[3], read_buffer[2]});
-          end else begin
-            // Big-endian: [I_MSB, I_LSB, Q_MSB, Q_LSB]
-            i_sample = $signed({read_buffer[0], read_buffer[1]});
-            q_sample = $signed({read_buffer[2], read_buffer[3]});
-          end
-          
-          send_samples.push_back({i_sample, q_sample});
-          num_samples++;
-        end
-
-        // When we have SPP samples or reached end of file, send the packet
-        if (send_samples.size() >= SPP || (end_of_file && send_samples.size() > 0)) begin
-          // Pad with zeros if we don't have enough samples
-          while (send_samples.size() < SPP) begin
-            send_samples.push_back({16'(0), 16'(0)}); // Pad with zeros
-          end
-
-          // Send the packet
-          $display("Sending packet %0d with %0d samples", packets_sent, send_samples.size());
-          blk_ctrl.send_items(0, send_samples);
-
-          // Wait for and receive the processed packet
-          blk_ctrl.recv_items(0, recv_samples);
-
-          // Process and validate the received samples
-          `ASSERT_ERROR(recv_samples.size() == SPP,
-            $sformatf("Received payload didn't match size of payload sent (expected %0d, got %0d)", SPP, recv_samples.size()));
-
-          // Write the received samples to output file in binary sc16 format
-          for (int i=0; i < recv_samples.size(); i++) begin
-            logic signed [15:0] out_i, out_q;
-            logic [7:0] out_bytes[4];
-            item_t sample_out;
-            
-            sample_out = recv_samples[i];
-            out_i = sample_out[31:16];
-            out_q = sample_out[15:0];
-            
-            // Convert to bytes based on endianness
-            if (little_endian) begin
-              // Little-endian: [I_LSB, I_MSB, Q_LSB, Q_MSB]
-              out_bytes[0] = out_i[7:0];
-              out_bytes[1] = out_i[15:8];
-              out_bytes[2] = out_q[7:0];
-              out_bytes[3] = out_q[15:8];
-            end else begin
-              // Big-endian: [I_MSB, I_LSB, Q_MSB, Q_LSB]
-              out_bytes[0] = out_i[15:8];
-              out_bytes[1] = out_i[7:0];
-              out_bytes[2] = out_q[15:8];
-              out_bytes[3] = out_q[7:0];
-            end
-            
-            $fwrite(output_file, "%c%c%c%c", out_bytes[0], out_bytes[1], out_bytes[2], out_bytes[3]);
-          end
-          
-          // Prepare for next packet
-          send_samples = {};
-          packets_sent++;
-        end
-      end
-
-      // Close the file
-      $fclose(input_file);
-      $fclose(output_file);
-
-      $display("Processed %0d samples in %0d packets", num_samples, packets_sent);
-      test.end_test();
-    end
+    // Test 3: Metric samples LSB (output_select = 3)
+    process_file_test("Reading Metric samples LSB", 32'b11);
+    
 
     //--------------------------------
     // Finish Up
