@@ -291,7 +291,6 @@ divide_int32 divider (
     .s_axis_dividend_tvalid(abs2_p_buf_tvalid),
     .s_axis_dividend_tready(abs2_p_buf_tready),
     
-    
     .s_axis_divisor_tdata(abs2_r_lat_safebuf_tdata),
     .s_axis_divisor_tlast(abs2_r_lat_safebuf_tlast),
     .s_axis_divisor_tvalid(abs2_r_lat_safebuf_tvalid),

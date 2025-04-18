@@ -368,7 +368,7 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
     vec_complex_float buff_fc32;
     vec_complex_int16 buff_sc16;
     std::vector<void*> buffs;
-    size_t samps_per_buff = std::min((size_t)rx_stream->get_max_num_samps(), total_num_samps); // Use smaller of max or requested total
+    size_t samps_per_buff = sc_packet_size; // std::min((size_t)rx_stream->get_max_num_samps(), total_num_samps); // Use smaller of max or requested total
     std::cout << "Using buffer size: " << samps_per_buff << " samples." << std::endl;
 
     if (cpu_format == "fc32") {
