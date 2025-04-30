@@ -1,6 +1,16 @@
+# Verilog
 build/
 build-ip/
 xsim*log
 xsim_proj
 modelsim_proj
 .Xil/
+
+# Python
+__pycache__/
+env/
+*.egg-info/
+*.egg
+
+# Draw.io
+*.drawio.bkp
