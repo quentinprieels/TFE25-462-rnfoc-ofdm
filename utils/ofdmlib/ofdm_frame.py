@@ -213,28 +213,6 @@ class ofdmFrame:
         tpayload = self.modulate_symbols(self.fsymbols_payload)
         return np.concatenate([tpreamble, tpayload]) # Shape: [(CP_preamble + K) * M] + [N * ((CP + K) * M)]
     
-    def save_tsymbols(self, filename: str = "", auto_filename: bool = False) -> None:
-        """
-        Save the time domain symbols to a file.
-        
-        Parameters:
-        - filename: The name of the file to save the symbols
-        """
-        assert self.tsymbols.shape[0] == self.frame_tlen, "Invalid frame length"
-        if auto_filename:
-            filename = f"OFDM_frame_{self.K}_{self.CP}_{self.M}_{self.N}_{self.preamble_mod}_{self.payload_mod}.txt"
-        
-        # Create I/Q signal
-        split_signal = np.zeros((self.frame_tlen * 2))
-        split_signal[0::2] = np.real(self.tsymbols)
-        split_signal[1::2] = np.imag(self.tsymbols)
-        
-        # Normalize the signal and ensure norm < 1
-        split_signal = split_signal / np.max(np.abs(split_signal)) * 0.7      
-        np.savetxt(filename, split_signal)
-        print(f"SIG LENGTH: {self.frame_tlen}")
-        print(f"2x SIG LENGTH: {split_signal.shape[0]}")
-    
     
     ######################################
     # Time domain symbols - demodulation #
@@ -277,12 +255,11 @@ class ofdmFrame:
         fsymbols = 1/np.sqrt(self.K * self.M) * np.fft.fft(tsymbols, axis=1)
         return fsymbols[:, :self.K] # Shape: (N, K)
     
-    def demodulate_frame(self, tsymbols: np.ndarray, CP_rx: bool = True, remove_cp_at: str = "end", remove_first_symbol: bool = False) -> None:
+    def demodulate_frame(self, CP_rx: bool = True, remove_cp_at: str = "end", remove_first_symbol: bool = False) -> None:
         """
         Demodulate the frame.
         
         Parameters:
-        - tsymbols: The time domain symbol waveform
         - CP_rx: True if the cyclic prefix is still present in the received symbols
         - remove_cp_at: Where to remove the cyclic prefix (begining or end)
         - remove_first_symbol: Remove the first symbol (set to true if the preamble is included in tsymbols)
@@ -290,9 +267,7 @@ class ofdmFrame:
         # Save the received symbols
         self.CP_rx = CP_rx
         if remove_first_symbol:
-            self.tsymbols_rx = tsymbols[(self.CP + self.K) * self.M:]
-        else:
-            self.tsymbols_rx = tsymbols
+            self.tsymbols_rx = self.tsymbols_rx[(self.CP + self.K) * self.M:]
         
         # Demodulate the payload symbols 
         fsymbols_payload_rx = self.demodulate_symbols(remove_cp_at)
@@ -367,3 +342,96 @@ class ofdmFrame:
         n_total_bits = np.sum(data_mask) * self._bits_per_fsymbol[self.payload_mod]
         ber = n_errors / n_total_bits
         return ber
+
+
+    #################################
+    # Save/load signal to/from file #
+    #################################
+    
+    def save_tsymbols_txt(self, filename: str = "", auto_filename: bool = False) -> None:
+        """
+        Save the time domain symbols to a file.
+        
+        Parameters:
+        - filename: The name of the file to save the symbols
+        """
+        assert self.tsymbols.shape[0] == self.frame_tlen, "Invalid frame length"
+        if auto_filename:
+            filename = f"OFDM_frame_{self.K}_{self.CP}_{self.M}_{self.N}_{self.preamble_mod}_{self.payload_mod}.txt"
+        
+        # Create I/Q signal
+        split_signal = np.zeros((self.frame_tlen * 2))
+        split_signal[0::2] = np.real(self.tsymbols)
+        split_signal[1::2] = np.imag(self.tsymbols)
+        
+        # Normalize the signal and ensure norm < 1
+        split_signal = split_signal / np.max(np.abs(split_signal)) * 0.7      
+        np.savetxt(filename, split_signal)
+        print(f"SIG LENGTH: {self.frame_tlen}")
+        print(f"2x SIG LENGTH: {split_signal.shape[0]}")
+        
+    def load_tsymbols_txt(self, filename: str, ignore_zero: bool = False) -> None:
+        """
+        Load the time domain symbols from a file.
+        
+        Parameters:
+        - filename: The name of the file to load the symbols
+        - ignore_zero: Ignore zero samples
+        - crop: Crop the signal to the expected length
+        """
+        data = np.loadtxt(filename)       
+        if ignore_zero:
+            rx_sig = rx_sig[rx_sig != 0]
+        
+        rx_sig = data[0::2] + 1j * data[1::2]
+        rx_sig.reshape(-1, 1)
+        rx_sig = np.squeeze(rx_sig)
+        
+        # Check the signal length
+        if len(rx_sig) != self.frame_tlen:
+            print(f"CAUTION: Invalid signal length: expected {self.len}, got {len(rx_sig)}\n")
+        self.tsymbols_rx = rx_sig
+        
+    def load_tysmbol_bin(self, filename: str, ignore_zero: bool=False, type: str="fc32") -> None:
+        """
+        Load a file containing a I/Q signal. The file has the same format as
+        the save function.        
+        """
+        with open(filename, "rb") as file:
+            if type == "fc32":
+                data = np.fromfile(file, dtype=np.float32)
+            elif type == "sc16":
+                data = np.fromfile(file, dtype=np.int16)
+            data = data.astype(np.complex64)
+            if ignore_zero:
+                data = data[data != 0]
+                
+            rx_sig = data[0::2] + 1j * data[1::2]
+            rx_sig.reshape(-1, 1)
+            rx_sig = np.squeeze(rx_sig)
+        
+        # Check the signal length
+        if len(rx_sig) != self.len:
+            print(f"CAUTION: Invalid signal length: expected {self.len}, got {len(rx_sig)}\n")
+        self.tsymbols_rx = rx_sig
+
+
+    ######################
+    # Channel simulation #
+    ######################
+    
+    def add_noise(self, SNR: float) -> None:
+        """
+        Add AWG noise to the given frame.
+        """        
+        if SNR == np.inf:
+            self.tsymbols_rx = self.tsymbols
+            return
+        
+        signal_power = np.mean(np.abs(self.tsymbols[self.preamble_tlen:]) ** 2)
+        noise_power = signal_power / (10 ** (SNR / 10))
+        noise_std_dev = np.sqrt(noise_power / 2)
+        noise_real = self.generator.normal(loc=0, scale=noise_std_dev, size=len(self.tsymbols))
+        noise_imag = self.generator.normal(loc=0, scale=noise_std_dev, size=len(self.tsymbols))
+        noise_frame = noise_real + 1j * noise_imag
+        self.tsymbols_rx = self.tsymbols + noise_frame

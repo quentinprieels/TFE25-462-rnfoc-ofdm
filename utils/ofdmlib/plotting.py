@@ -173,35 +173,50 @@ def plot_constellation(ofdm_frame: ofdmFrame, view_title: bool = False) -> None:
     plt.legend()
     plt.tight_layout()
 
-def plot_ber_vs_snr(ber_results: pd.DataFrame, view_title: bool = True, params: dict = None, threoritical: bool = True) -> None:
+def plot_ber_vs_snr(ber_results: pd.DataFrame, view_title: bool = True, params: dict = None, theoretical: bool = True) -> None:
     """
     Plot the BER vs SNR curve for each payload modulation scheme.
     The ber_results dataframe should contain the following columns:
     - SNR: The SNR value in dB
     - Modulation: The modulation scheme used (BPSK, QPSK)
     - BER: The bit error rate for the corresponding SNR and modulation scheme
-    """
+    """    
+    # Standard theoretical BER functions (these are correct for AWGN channels)
+    bpsk_th = lambda x: 0.5 * erfc(np.sqrt(10 ** (x / 10)))
+    qpsk_th = lambda x: 0.5 * erfc(np.sqrt(0.5 * 10 ** (x / 10)))
+    
     title = "BER vs SNR"
     plt.figure(title, figsize=(10, 6))
     if view_title:
         plt.suptitle(title, fontsize=14, fontweight="bold")
         if params is not None:
             subtitle = f"Parameters: {' - '.join(sorted([f'{k}: {v}' for k, v in params.items()]))}"
-            plt.title(subtitle, fontsize=10, fontstyle="itlic")
-
+            plt.title(subtitle, fontsize=10, fontstyle="italic")
+    
+    # Theoretical BER functions mapping
+    theoretical_ber = {
+        "BPSK": bpsk_th,
+        "QPSK": qpsk_th
+    }
+    
     agg_results = ber_results.groupby(["Modulation", "SNR"])["BER"].agg(['mean', 'std']).reset_index()
     modulations = agg_results["Modulation"].unique()
     palette = sns.color_palette("deep", n_colors=len(modulations))
-    markers = ['o', 's', 'x', 'd', '^', 'v'] # Added more markers
+    markers = ['o', 's', 'x', 'd', '^', 'v']
     color_map = dict(zip(modulations, palette))
     marker_map = dict(zip(modulations, markers[:len(modulations)]))
-
+    
+    # Determine SNR range for theoretical curves
+    min_snr = agg_results["SNR"].min()
+    max_snr = agg_results["SNR"].max()
+    snr_range_th = np.linspace(min_snr, max_snr, 100)
+    
     # Plot each modulation
     for mod in modulations:
         mod_data = agg_results[agg_results["Modulation"] == mod].sort_values("SNR")
         color = color_map[mod]
         marker = marker_map[mod]
-
+        
         # Plot Simulated Data with error bars
         std_dev = mod_data["std"].fillna(0)
         plt.errorbar(
@@ -211,14 +226,27 @@ def plot_ber_vs_snr(ber_results: pd.DataFrame, view_title: bool = True, params: 
             label=f"{mod} (Simulated)",
             color=color,
             marker=marker,
-            linestyle='--', # Dashed line for simulated
+            linestyle='--',
             capsize=3
         )
-
+        
+        # Plot Theoretical Data if available
+        if theoretical and mod in theoretical_ber:
+            ber_th = theoretical_ber[mod](snr_range_th)
+            valid_indices = ber_th > 1e-10
+            plt.plot(
+                snr_range_th[valid_indices],
+                ber_th[valid_indices],
+                label=f"{mod} (Theoretical)",
+                color=color,
+                linestyle='-',
+                markersize=0
+            )
+    
     plt.yscale("log")
     plt.xlabel("SNR [dB]")
     plt.ylabel("Bit Error Rate (BER)")
-    plt.ylim(bottom=10**(-6)) # Set a reasonable lower limit for BER axis
+    plt.ylim(bottom=10**(-6))
     plt.legend()
     plt.grid(True, which='both', linestyle='--')
     plt.tight_layout()
