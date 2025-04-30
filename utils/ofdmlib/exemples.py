@@ -35,7 +35,7 @@ plt.savefig("constellation.pdf", bbox_inches="tight")
 
          
 # Plot the BER vs SNR curve for each payload modulation scheme
-snrs = np.arange(-10, 25, 2)
+snrs = np.arange(-10, 20, 2)
 mods = ["BPSK", "QPSK"]
 n_exp = 20
 random_seeds = np.arange(n_exp)
@@ -44,13 +44,13 @@ results_list = []
 for mod in mods:
     for snr in snrs:
         for i in range(n_exp):
-            ofdm_frame = ofdmFrame(K=1024, CP=256, M=1, N=25, preamble_mod="BPSK", payload_mod=mod, Nt=4, Nf=1, random_seed=random_seeds[i])
+            ofdm_frame = ofdmFrame(K=1024, CP=0, M=1, N=250, preamble_mod="BPSK", payload_mod=mod, Nt=250, Nf=1024, random_seed=random_seeds[i])
             ofdm_frame.add_noise(snr)
-            ofdm_frame.demodulate_frame(remove_first_symbol=True)
+            ofdm_frame.demodulate_frame(remove_first_symbol=True, CP_rx=False)
             ofdm_frame.equalize()
             ber = ofdm_frame.compute_ber()
             results_list.append({"SNR": snr, "Modulation": mod, "BER": ber})
 
 ber_results = pd.DataFrame(results_list)
-plot_ber_vs_snr(ber_results, view_title=False, params={"K": 1024, "CP": 256, "M": 1, "N": 25, "Nt": 4, "Nf": 1})
+plot_ber_vs_snr(ber_results, view_title=False, params={"K": 1024, "CP": 0, "M": 1, "N": 250, "Nt": 250, "Nf": 1024})
 plt.savefig("ber_vs_snr.pdf", bbox_inches="tight")

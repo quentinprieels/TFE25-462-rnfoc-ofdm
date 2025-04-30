@@ -431,12 +431,25 @@ class ofdmFrame:
         """        
         if SNR == np.inf:
             self.tsymbols_rx = self.tsymbols
-            return
+            return        
         
-        signal_power = np.mean(np.abs(self.tsymbols[self.preamble_tlen:]) ** 2)
-        noise_power = signal_power / (10 ** (SNR / 10))
+        # Compute the average symbol‐power over payload (no CP)
+        payload_td = self.tsymbols[self.preamble_tlen:]
+        payload_td = payload_td.reshape(self.N, (self.CP + self.K) * self.M)
+        payload_no_cp = payload_td[:, self.CP * self.M:]
+        signal_power = np.mean(np.abs(payload_no_cp) ** 2)
+
+        # Convert Eb/N0 to Es/N0 by multiplying by bits_per_symbol
+        bps = self._bits_per_fsymbol[self.payload_mod]
+        ebn0_lin = 10 ** (SNR / 10)
+        esn0_lin = ebn0_lin * bps
+
+        # Now get noise‐power per sample
+        noise_power = signal_power / esn0_lin
         noise_std_dev = np.sqrt(noise_power / 2)
-        noise_real = self.generator.normal(loc=0, scale=noise_std_dev, size=len(self.tsymbols))
-        noise_imag = self.generator.normal(loc=0, scale=noise_std_dev, size=len(self.tsymbols))
+
+        noise_real = self.generator.normal(0, noise_std_dev, size=len(self.tsymbols))
+        noise_imag = self.generator.normal(0, noise_std_dev, size=len(self.tsymbols))
         noise_frame = noise_real + 1j * noise_imag
+
         self.tsymbols_rx = self.tsymbols + noise_frame
