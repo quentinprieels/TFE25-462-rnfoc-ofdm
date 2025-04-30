@@ -509,9 +509,6 @@
         <mxCell id="yB-q2PVRav_EBHRm1ZwY-77" value="&lt;b&gt;0&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;fontSize=10;fontColor=#EA6B66;align=right;" parent="1" vertex="1">
           <mxGeometry x="768" y="1780" width="30" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="Kf9-neqTMmS7XWPmuokB-1" value="&lt;b&gt;Legend&lt;/b&gt;" style="text;html=1;align=left;verticalAlign=bottom;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;fontColor=light-dark(#000000,#EDEDED);" parent="1" vertex="1">
-          <mxGeometry x="40.00000000000001" y="1890" width="60" height="30" as="geometry" />
-        </mxCell>
         <mxCell id="_T2zJcq4_QJP5SfaKQ6C-1" value="K/2" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;fontSize=8;fontColor=#FFB570;align=right;" parent="1" vertex="1">
           <mxGeometry x="299.96" y="240" width="20" height="10" as="geometry" />
         </mxCell>
