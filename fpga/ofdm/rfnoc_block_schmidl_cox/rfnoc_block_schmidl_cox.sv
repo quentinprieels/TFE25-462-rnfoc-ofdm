@@ -252,16 +252,17 @@ module rfnoc_block_schmidl_cox #(
   //-------------------------------------
   localparam int FFT_SIZE = 1024;
   localparam int CP_SIZE = 128;
+  localparam int OVERSAMPLING = 5;
 
-  wire [32+$clog2(CP_SIZE+1)-1:0] m_tdata;
+  wire [32+$clog2((CP_SIZE * OVERSAMPLING)+1)-1:0] m_tdata;
   wire m_tlast, m_tvalid, m_tready;
   wire [31:0] yl_tdata;
   wire yl_tlast, yl_tvalid, yl_tready;
   wire [15:0] packet_len;
   wire eob;
   metric_calculator # (
-    .FFT_SIZE(FFT_SIZE),
-    .CP_SIZE(CP_SIZE)  
+    .FFT_SIZE(FFT_SIZE * OVERSAMPLING),
+    .CP_SIZE(CP_SIZE * OVERSAMPLING)  
   ) mc0 (
     .clk(axis_data_clk),
     .reset(axis_data_rst),  // Used to reset the module on device startup
@@ -287,9 +288,9 @@ module rfnoc_block_schmidl_cox #(
   );
 
   detector #(
-    .HALF_FFT_SIZE(FFT_SIZE / 2),
-    .HALPH_CP_SIZE(CP_SIZE / 2),
-    .M_TDATA_WIDTH(32+$clog2(CP_SIZE+1))
+    .HALF_FFT_SIZE((FFT_SIZE * OVERSAMPLING) / 2),
+    .HALPH_CP_SIZE((CP_SIZE * OVERSAMPLING) / 2),
+    .M_TDATA_WIDTH(32+$clog2((CP_SIZE * OVERSAMPLING)+1))
   ) detector0 (
     .clk(axis_data_clk),
     .reset(axis_data_rst),

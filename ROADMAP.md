@@ -22,7 +22,8 @@
 
 ### Block validation
 
-- [ ] Solve error in the BER after reception => why is there some points not in the constellation?
+- [x] Solve error in the BER after reception => why is there some points not in the constellation?
+  This was solved by adding the oversampling factor to the signal like in the default code
 - [ ] Create a benchmark for the OFDM receiver
   - [ ] BER with and without synchronization
   - [ ] Metric difference between simulation and hardware
@@ -30,6 +31,7 @@
 
 ### FPGA Implementation or ideas
 
+- [x] Add support for the oversampling factor
 - [ ] Adding the FFT to the OFDM receiver in hardware (modify the FSM and the python scripts to remove the OFDM prefix)
 - [ ] Perform the end of the OFDM demodulation in C++ to target real-time system and having a single to use script
 - [ ] Removing the latency of the k/2 delayed signal by starting the *start of frame after max* 77 cycles later

@@ -1,9 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-filename = "signals/rx_samples_schmidl_cox.signal.fc32.dat"
+filename = "../tests/rx_samples_raw.sc16.dat"
 is_binary = True
-format = "fc32"
+format = "sc16"
 
 def load_tsymbols_txt(filename: str) -> np.ndarray:
     """
@@ -55,7 +55,6 @@ def plot_received_signal(rx_sig: np.ndarray) -> None:
     axs[2].set_title('Imaginary Part')
     axs[2].grid(linestyle='--')
     plt.tight_layout()
-    plt.show()
 
 
 signal = None
@@ -69,3 +68,4 @@ else:
 
 print(f"Signal shape: {signal.shape}")
 plot_received_signal(signal)
+plt.savefig("../tests/received_signal.pdf")

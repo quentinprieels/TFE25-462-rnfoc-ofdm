@@ -173,7 +173,7 @@ module rfnoc_block_schmidl_cox_tb;
     test.start_test(test_name, test_timeout);
 
     // Configure the block
-    blk_ctrl.reg_write(REG_PACKET_SIZE_ADDR, 32'd2304);
+    blk_ctrl.reg_write(REG_PACKET_SIZE_ADDR, 32'd34560);
     blk_ctrl.reg_write(REG_THRESHOLD_ADDR, 32'h00200000);
     blk_ctrl.reg_write(REG_OUTPUT_SELECT_ADDR, output_select_value);
     
