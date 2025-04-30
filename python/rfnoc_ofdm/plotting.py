@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.special import erfc
 
-from ofdm_frame import ofdmFrame
+from .ofdm_frame import ofdmFrame
 
 colors = {
     "blue": "#7EA6E0",

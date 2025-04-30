@@ -366,9 +366,11 @@ module rfnoc_block_schmidl_cox_tb;
     // Test Detection
     //--------------------------------
 
-    // Test 1: IQ samples (output_select = 0)
-    process_file_test("Reading IQ samples from binary file and processing with zero signal when invalid", 32'b00);
-    // process_file_test("Reading IQ samples from binary file and processing", 32'b01, 250us);
+    // Test 0: IQ samples (output_select = 0)
+    process_file_test("Reading IQ samples from binary file and processing with zero signal when invalid", 32'b00, 1ms);
+
+    // Test 1: IQ samples with signal (output_select = 1)
+    // process_file_test("Reading IQ samples from binary file and processing", 32'b01, 1ms);
 
     // Test 2: Metric samples MSB (output_select = 2) 
     // process_file_test("Reading Metric samples MSB", 32'b10);

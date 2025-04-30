@@ -6,7 +6,7 @@
 
 - [ ] Clean the different repositories by adding OFDM simulation to `rfnoc-ofdm`
   - [x] Add OFDM lib for simulation
-  - [ ] Test the OFDM lib on the USRP
+  - [x] Test the OFDM lib on the USRP
   - [ ] Add Schmidl & Cox algorithm for synchronization simulation and graphs
 
 ### Scripts
@@ -15,8 +15,9 @@
 
 ### Documentation
 
-- [ ] Add explanation for building this module, using UHD scripts, creating a new block (where to find possible blocs, how to create the yaml desciption of the block and of the image), how to add IP's, ...
 - [ ] Finish the [installation.md](INSTALLATION.md) file
+- [ ] Finish the [building.md](BUILDING.md) file
+- [ ] Add explanation for building this module, using UHD scripts, creating a new block (where to find possible blocs, how to create the yaml desciption of the block and of the image), how to add IP's, ... => devlopping.md file
 - [ ] Add a description of the different blocks and their purpose, how to interact with them, how to use them, etc
 
 ### Block validation

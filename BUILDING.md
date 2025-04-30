@@ -4,6 +4,14 @@ Many information and instructions provided in this document where taken from the
 [Knowledge base of Ettus Research](https://kb.ettus.com/), and especially from the
 [Getting Started with RFNoC in UHD 4.0](https://kb.ettus.com/Getting_Started_with_RFNoC_in_UHD_4.0) page. 
 
+## Building the RFNoC OOT module
+
+> TODO: create the build folder and explain the different build targets
+
+## Installing the RFNoC OOT module
+
+> TODO: Installing the RFNoC OOT module (to install the python library)
+
 ## Load a custom FPGA image
 
 To load a custom FPGA image, you can use the `uhd_image_loader` command. 

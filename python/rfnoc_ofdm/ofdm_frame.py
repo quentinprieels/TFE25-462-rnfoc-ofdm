@@ -1,8 +1,8 @@
 import numpy as np
 from scipy.interpolate import RegularGridInterpolator
-import matplotlib.pyplot as plt
 
-from utils import symbol_mapping, inverse_mapping, InputError
+from .utils import symbol_mapping, inverse_mapping, InputError
+
 
 class ofdmFrame:
     """
@@ -348,7 +348,7 @@ class ofdmFrame:
     # Save/load signal to/from file #
     #################################
     
-    def save_tsymbols_txt(self, filename: str = "", auto_filename: bool = False) -> None:
+    def save_tsymbols_txt(self, filename: str = "", auto_filename: bool = False) -> str:
         """
         Save the time domain symbols to a file.
         
@@ -369,6 +369,7 @@ class ofdmFrame:
         np.savetxt(filename, split_signal)
         print(f"SIG LENGTH: {self.frame_tlen}")
         print(f"2x SIG LENGTH: {split_signal.shape[0]}")
+        return filename
         
     def load_tsymbols_txt(self, filename: str, ignore_zero: bool = False) -> None:
         """
@@ -411,8 +412,12 @@ class ofdmFrame:
             rx_sig = np.squeeze(rx_sig)
         
         # Check the signal length
-        if len(rx_sig) != self.len:
-            print(f"CAUTION: Invalid signal length: expected {self.len}, got {len(rx_sig)}\n")
+        if len(rx_sig) != self.frame_tlen:
+            if self.frame_tlen - len(rx_sig) == self.preamble_tlen:
+                print(f"CAUTION: The preamble is missing, the cyclic prefix is still present in the received symbols")
+                self.CP_rx = True
+            else:
+                print(f"CAUTION: Invalid signal length: expected {self.frame_tlen}, got {len(rx_sig)}\n")
         self.tsymbols_rx = rx_sig
 
 
