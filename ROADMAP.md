@@ -5,7 +5,7 @@
 ### Repositories
 
 - [ ] Clean the different repositories by adding OFDM simulation to `rfnoc-ofdm`
-  - [v] Add OFDM lib for simulation
+  - [x] Add OFDM lib for simulation
   - [ ] Test the OFDM lib on the USRP
   - [ ] Add Schmidl & Cox algorithm for synchronization simulation and graphs
 - [ ] Implement helpful scripts for python packet processing and interaction with UHD
