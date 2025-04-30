@@ -11,7 +11,7 @@
 
 ### Scripts
 
-- [ ] Implement helpful scripts for python packet processing and interaction with UHD
+- [x] Implement helpful scripts for python packet processing and interaction with UHD
 
 ### Documentation
 
