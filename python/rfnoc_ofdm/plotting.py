@@ -96,8 +96,9 @@ def plot_frame_waveform(ofdm_frame: ofdmFrame, view_title: bool = True, params_f
                 subtitle_params_values[key] = value
     subtitle = f"Parameters: {' - '.join(sorted([f'{k}: {v}' for k, v in subtitle_params_values.items()]))}"
     
-    plt.suptitle(title, fontsize=14, fontweight="bold")
-    plt.title(subtitle, fontsize=10, fontstyle="italic")
+    if view_title:
+        plt.suptitle(title, fontsize=14, fontweight="bold")
+        plt.title(subtitle, fontsize=10, fontstyle="italic")
     
     line_annotation_height = 1.1
     line2_annotation_height = 1.0

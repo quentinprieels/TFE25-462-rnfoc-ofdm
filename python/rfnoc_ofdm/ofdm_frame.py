@@ -440,12 +440,10 @@ class ofdmFrame:
         signal_power = np.mean(np.abs(payload_no_cp) ** 2)
 
         # Convert Eb/N0 to Es/N0 by multiplying by bits_per_symbol
-        bps = self._bits_per_fsymbol[self.payload_mod]
         ebn0_lin = 10 ** (SNR / 10)
-        esn0_lin = ebn0_lin * bps
 
         # Now get noise‐power per sample
-        noise_power = signal_power / esn0_lin
+        noise_power = signal_power / ebn0_lin
         noise_std_dev = np.sqrt(noise_power / 2)
 
         noise_real = self.generator.normal(0, noise_std_dev, size=len(self.tsymbols))

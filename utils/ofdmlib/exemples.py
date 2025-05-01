@@ -1,3 +1,4 @@
+from tqdm import tqdm
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -42,7 +43,7 @@ random_seeds = np.arange(n_exp)
 results_list = []
 
 for mod in mods:
-    for snr in snrs:
+    for snr in tqdm(snrs, desc=f"Modulation: {mod}"):
         for i in range(n_exp):
             ofdm_frame = ofdmFrame(K=1024, CP=0, M=1, N=250, preamble_mod="BPSK", payload_mod=mod, Nt=250, Nf=1024, random_seed=random_seeds[i])
             ofdm_frame.add_noise(snr)
