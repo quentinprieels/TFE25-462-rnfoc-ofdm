@@ -75,7 +75,7 @@ def plot_frame_matrix(ofdm_frame: ofdmFrame, view_bits: bool = False, view_title
     plt.xlabel("Subcarriers (frequency)")
     plt.tight_layout()
 
-def plot_frame_waveform(ofdm_frame: ofdmFrame, view_title: bool = True, params_for_title: dict = None) -> None:
+def plot_frame_waveform(ofdm_frame: ofdmFrame, use_rx: bool = False, view_title: bool = True, params_for_title: dict = None) -> None:
     """
     Plot the time domain waveform of the OFDM frame.
     """
@@ -101,11 +101,14 @@ def plot_frame_waveform(ofdm_frame: ofdmFrame, view_title: bool = True, params_f
         plt.title(subtitle, fontsize=10, fontstyle="italic")
     
     line_annotation_height = 1.1
-    line2_annotation_height = 1.0
+    line2_annotation_height = 1.025
     text_annotation_height = 1.12
         
     # Signal plot
+
     normalized_frame = np.abs(ofdm_frame.tsymbols) / np.max(np.abs(ofdm_frame.tsymbols))
+    if use_rx:
+        normalized_frame = np.abs(ofdm_frame.tsymbols_rx) / np.max(np.abs(ofdm_frame.tsymbols_rx))
     plt.plot(normalized_frame, label="OFDM frame", color=colors["blue"], alpha=0.4)  
     
     # Signal information (sto, cp, ...)
