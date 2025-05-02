@@ -1,3 +1,4 @@
+import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -72,3 +73,76 @@ def plot_schmidl_cox(ofdm_frame: ofdmFrame, metric: tuple[np.ndarray, str], thre
     plt.ylabel("Metrics M[n]")
     plt.tight_layout()
     
+    
+# Function to plot CDF
+def plot_cdfs(df: pd.DataFrame, ofdm_frame: ofdmFrame, title: str = "", view_title: bool = False) -> None:
+    plt.figure(figsize=(8, 6))
+    if view_title:
+        plt.suptitle(title, fontsize=14, fontweight="bold")
+    
+    line_styles = ['-', '--', '-.', ':', '-', '--', '-.']
+    all_min = df.min().min()
+    all_max = df.max().max()
+    
+    for column in df.columns:
+        column_data = np.sort(df[column].values)
+        y_values = np.arange(1, len(column_data) + 1) / len(column_data) * 100
+        
+        # Create extended x and y arrays
+        x_extended = []
+        y_extended = []
+        
+        # Add minimum point if needed
+        if column_data[0] > all_min:
+            x_extended.append(all_min)
+            y_extended.append(0)
+        
+        # Add the actual data points
+        for i, val in enumerate(column_data):
+            x_extended.append(val)
+            y_extended.append(y_values[i])
+        
+        # Add the maximum point if needed
+        if column_data[-1] < all_max:
+            x_extended.append(all_max)
+            y_extended.append(100)        
+        
+        col_idx = list(df.columns).index(column)
+        plt.plot(x_extended, y_extended, 
+             linestyle=line_styles[col_idx % len(line_styles)], 
+             linewidth=2, 
+             label=column)
+    
+    # Add the gray area of successful detection
+    cp_size = ofdm_frame.CP * ofdm_frame.M
+    plt.axvspan(-cp_size // 2, cp_size // 2, color='gray', alpha=0.2, hatch='//')
+    
+    plt.xlabel('Error Value [index]')
+    plt.ylabel('Cumulative Percentage [%]')
+    plt.grid(linestyle='--')
+    plt.legend()
+    plt.tight_layout()
+
+
+if __name__ == "__main__":
+    from metric_calculator import metric_schmidl, moving_sum
+    from detector import find_max_idx
+    
+    # Plot example of the Schmidl and Cox metric
+    ofdm_frame = ofdmFrame(K=1024, CP=128, M=1, N=2, preamble_mod="BPSK", payload_mod="QPSK", Nt=2, Nf=1024, random_seed=42)
+    ofdm_frame.add_noise(10)
+    P, R, M = metric_schmidl(ofdm_frame)
+    N = moving_sum(M, ofdm_frame.CP)
+
+    # Normalize the metric
+    P = P / np.max(np.abs(P))
+    R = R / np.max(np.abs(R))
+    M = M / np.max(np.abs(M))
+    N = N / np.max(np.abs(N))
+
+    # Find the detection index
+    detection_idx = find_max_idx(N, threshold=0.5)
+
+    # Plot the metrics
+    plot_schmidl_cox(ofdm_frame, (N, "N"), info=(M, 'M'), threshold=0.5, limitate=True, sync_idx=detection_idx, view_title=False)
+    plt.savefig("schmidl_cox.pdf")

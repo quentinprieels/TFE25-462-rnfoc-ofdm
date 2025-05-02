@@ -4,10 +4,10 @@
 
 ### OFDM Library and python simulation
 
-- [ ] Clean the different repositories by adding OFDM simulation to `rfnoc-ofdm`
+- [x] Clean the different repositories by adding OFDM simulation to `rfnoc-ofdm`
   - [x] Add OFDM lib for simulation
   - [x] Test the OFDM lib on the USRP
-  - [ ] Add Schmidl & Cox algorithm for synchronization simulation and graphs
+  - [x] Add Schmidl & Cox algorithm for synchronization simulation and graphs
 
 ### Scripts
 
