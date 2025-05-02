@@ -34,6 +34,15 @@ ofdm_frame.equalize()
 plot_constellation(ofdm_frame, view_title=False)
 plt.savefig("constellation.pdf", bbox_inches="tight")
 
+
+# Add multipath channels
+ofdm_frame = ofdmFrame(K=1024, CP=128, M=5, N=4, preamble_mod="BPSK", payload_mod="QPSK", Nt=3, Nf=1, random_seed=42)
+ofdm_frame.add_paths([1, 0.5, 0.2], [0, 2, 10], 10) # gain, delay, snr
+ofdm_frame.demodulate_frame(remove_first_symbol=True)
+ofdm_frame.equalize()
+ber = ofdm_frame.compute_ber()
+print(f"BER: {ber}")
+
          
 # Plot the BER vs SNR curve for each payload modulation scheme
 snrs = np.arange(-10, 20, 2)

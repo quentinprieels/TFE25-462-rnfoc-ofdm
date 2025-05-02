@@ -451,3 +451,30 @@ class ofdmFrame:
         noise_frame = noise_real + 1j * noise_imag
 
         self.tsymbols_rx = self.tsymbols + noise_frame
+
+    def add_paths(self, gains: list[float], delays: list[int], SNR: float = np.inf) -> None:
+        """
+        Add multipath to the frame.
+        
+        Parameters:
+        - gains: List of gains for each path
+        - delays: List of delays for each path
+        - noise: Noise level
+        """
+        # Check if the number of gains and delays are equal
+        if len(gains) != len(delays):
+            raise ValueError("The number of gains and delays must be equal")
+        
+        # Add noise to the frame
+        self.add_noise(SNR)
+        
+        # Create the multipath channel
+        h = np.zeros(max(delays) + 1, dtype=complex)
+        for gain, delay in zip(gains, delays):
+            h[delay] += gain
+        h = h / np.sqrt(np.sum(np.abs(h) ** 2))
+        
+        # Create the received signal
+        rx_sig = np.convolve(self.tsymbols_rx, h)
+        rx_sig = rx_sig[:self.frame_tlen]
+        self.tsymbols_rx = rx_sig
