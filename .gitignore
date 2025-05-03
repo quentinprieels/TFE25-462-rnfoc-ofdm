@@ -12,5 +12,8 @@ env/
 *.egg-info/
 *.egg
 
+# Simulation data (too large)
+sim/bus_sizes/data/
+
 # Draw.io
 *.drawio.bkp
