@@ -12,7 +12,8 @@ K = 1024
 L = K // 2
 CP = 128
 
-simulation_vs_vcd_results = {} # Fromat: {signal: {metric1: value1, metric2: value2, ...}, ...}
+results = [] # Fromat: [{"signal1": "signal1_name", "signal2": "signal2_name", "rmse": 0.1, ...}, {...}, ...]
+plot = True # Caution: this can takes time
 
 ###########################
 # Symbol auto-correlation #
@@ -29,8 +30,7 @@ input_vcd = load_axi_signal_from_vcd(
     is_complex=True
     )
 input_vcd = input_vcd[1:] # Experimental remark: vcd is 1 sample ahead
-min_len = min(len(input), len(input_vcd))
-simulation_vs_vcd_results["Input signal"] = compare_signals(input[:min_len], input_vcd[:min_len])
+results.append(compare_signals(input, "Input full precision", input_vcd, "Input VCD", plot=plot))
 
 
 # Delay by L samples
@@ -45,8 +45,7 @@ delayed_by_L_vcd = load_axi_signal_from_vcd(
     is_complex=True
 )
 delayed_by_L_vcd = delayed_by_L_vcd[1:] # Experimental remark: vcd is 1 sample ahead
-min_len = min(len(delayed_by_L), len(delayed_by_L_vcd))
-simulation_vs_vcd_results["Delayed by L"] = compare_signals(delayed_by_L[:min_len], delayed_by_L_vcd[:min_len])
+results.append(compare_signals(delayed_by_L, "Delayed by L full precision", delayed_by_L_vcd, "Delayed by L VCD", plot=plot))
 
 
 # Conjugate the delayed signal
@@ -61,12 +60,13 @@ delayed_conjugate_vcd = load_axi_signal_from_vcd(
     is_complex=True
 )
 delayed_conjugate_vcd =  delayed_conjugate_vcd[1:] # Experimental remark: vcd is 1 sample ahead
-min_len = min(len(delayed_conjugate), len(delayed_conjugate_vcd))
-simulation_vs_vcd_results["Delayed and conjugate"] = compare_signals(delayed_conjugate[:min_len], delayed_conjugate_vcd[:min_len])
+results.append(compare_signals(delayed_conjugate, "Delayed and conjugate full precision", delayed_conjugate_vcd, "Delayed and conjugate VCD", plot=plot))
 
 
 # Multiply conjugate by input
 conjugate_multiplayed = (input * delayed_conjugate[:len(input)]) / 2  #? Factor 2^1
+conjugate_multiplayed_truncated = truncate_complex_to_16_bits(conjugate_multiplayed, 32)
+conjugate_multiplayed_clipped = clip_complex_to_16_bits(conjugate_multiplayed)
 conjugate_multiplayed_vcd = load_axi_signal_from_vcd(
     vcd_file, 
     "rfnoc_block_schmidl_cox_tb.dut.mc0.autocorrelator.mult_tdata[63:0]",
@@ -76,12 +76,15 @@ conjugate_multiplayed_vcd = load_axi_signal_from_vcd(
     bus_size=64,
     is_complex=True
 )
-min_len = min(len(conjugate_multiplayed), len(conjugate_multiplayed_vcd))
-simulation_vs_vcd_results["Conjugated multiplayed"] = compare_signals(conjugate_multiplayed[:min_len], conjugate_multiplayed_vcd[:min_len])
+results.append(compare_signals(conjugate_multiplayed, "Conjugated multiplayed full precision", conjugate_multiplayed_vcd, "Conjugated multiplayed VCD", plot=plot))
+results.append(compare_signals(conjugate_multiplayed, "Conjugated multiplayed full precision", conjugate_multiplayed_truncated, "Conjugated multiplayed truncated", plot=plot))
+results.append(compare_signals(conjugate_multiplayed, "Conjugated multiplayed full precision", conjugate_multiplayed_clipped, "Conjugated multiplayed clipped", plot=plot))
 
 
 # Moving sum to compute the autocorrelation
 p_real = moving_sum(np.real(conjugate_multiplayed), L)
+truncated_p_real = moving_sum(np.real(conjugate_multiplayed_truncated), L)
+clipped_p_real = moving_sum(np.real(conjugate_multiplayed_clipped), L)
 p_real_vcd = load_axi_signal_from_vcd(
     vcd_file, 
     "rfnoc_block_schmidl_cox_tb.dut.mc0.autocorrelator.p_i_unscaled_tdata[41:0]",
@@ -91,10 +94,11 @@ p_real_vcd = load_axi_signal_from_vcd(
     bus_size=42,
     is_complex=False
 )
-min_len = min(len(p_real), len(p_real_vcd))
-simulation_vs_vcd_results["P real"] = compare_signals(p_real[:min_len], p_real_vcd[:min_len])
+results.append(compare_signals(p_real, "P real full precision", p_real_vcd, "P real VCD", plot=plot))
 
 p_imag = moving_sum(np.imag(conjugate_multiplayed), L)
+truncated_p_imag = moving_sum(np.imag(conjugate_multiplayed_truncated), L)
+clipped_p_imag = moving_sum(np.imag(conjugate_multiplayed_clipped), L)
 p_imag_vcd = load_axi_signal_from_vcd(
     vcd_file, 
     "rfnoc_block_schmidl_cox_tb.dut.mc0.autocorrelator.p_q_unscaled_tdata[41:0]",
@@ -104,12 +108,13 @@ p_imag_vcd = load_axi_signal_from_vcd(
     bus_size=42,
     is_complex=False
 )
-min_len = min(len(p_imag), len(p_imag_vcd))
-simulation_vs_vcd_results["P imaginary"] = compare_signals(p_imag[:min_len], p_imag_vcd[:min_len])
+results.append(compare_signals(p_imag, "P imaginary full precision", p_imag_vcd, "P imaginary VCD", plot=plot))
 
 
 # Moving sum truncate
-p_truncated = truncate_complex_to_16_bits(p_real + 1j * p_imag, 42)
+p = p_real + 1j * p_imag
+p_truncated = truncate_complex_to_16_bits(p, 42)
+p_clipped = clip_complex_to_16_bits(p)
 p_truncated_vcd = load_axi_signal_from_vcd(
     vcd_file, 
     "rfnoc_block_schmidl_cox_tb.dut.mc0.autocorrelator.p_tdata[31:0]",
@@ -119,8 +124,25 @@ p_truncated_vcd = load_axi_signal_from_vcd(
     bus_size=32,
     is_complex=True
 )
-min_len = min(len(p_truncated), len(p_truncated_vcd))
-simulation_vs_vcd_results["P truncated"] = compare_signals(p_truncated[:min_len], p_truncated_vcd[:min_len])
+results.append(compare_signals(p, "P full precision", p_truncated, "P truncated", plot=plot))
+results.append(compare_signals(p, "P full precision", p_clipped, "P clipped", plot=plot))
+results.append(compare_signals(p, "P full precision", p_truncated_vcd, "P truncated VCD", plot=plot))
+results.append(compare_signals(p_truncated, "P truncated", p_truncated_vcd, "P truncated VCD", plot=plot))
+
+truncated_p = truncated_p_real + 1j * truncated_p_imag
+clipped_p = clipped_p_real + 1j * clipped_p_imag
+results.append(compare_signals(p, "P full precision", truncated_p, "Truncated P", plot=plot))
+results.append(compare_signals(p, "P full precision", clipped_p, "Clipped P", plot=plot))
+
+truncated_p_truncated = truncate_complex_to_16_bits(truncated_p, 26)
+truncated_p_clipped = clip_complex_to_16_bits(truncated_p)
+results.append(compare_signals(p, "P full precision", truncated_p_truncated, "Truncated P truncated", plot=plot))
+results.append(compare_signals(p, "P full precision", truncated_p_clipped, "Truncated P clipped", plot=plot))
+
+clipped_p_truncated = truncate_complex_to_16_bits(clipped_p, 26)
+clipped_p_clipped = clip_complex_to_16_bits(clipped_p)
+results.append(compare_signals(p, "P full precision", clipped_p_truncated, "Clipped P truncated", plot=plot))
+results.append(compare_signals(p, "P full precision", clipped_p_clipped, "Clipped P clipped", plot=plot))
 
 
 
@@ -139,8 +161,7 @@ input_magnitude_vcd = load_axi_signal_from_vcd(
     is_complex=False
 )
 input_magnitude_vcd = input_magnitude_vcd[1:] # Experimental remark: vcd is 1 sample ahead
-min_len = min(len(input_magnitude), len(input_magnitude_vcd))
-simulation_vs_vcd_results["Input magnitude"] = compare_signals(input_magnitude[:min_len], input_magnitude_vcd[:min_len])
+results.append(compare_signals(input_magnitude, "Input magnitude full precision", input_magnitude_vcd, "Input magnitude VCD", plot=plot))
 
 
 # Moving sum to compute the energy
@@ -154,8 +175,7 @@ r_vcd = load_axi_signal_from_vcd(
     bus_size=42,
     is_complex=False
 )
-min_len = min(len(r), len(r_vcd))
-simulation_vs_vcd_results["R"] = compare_signals(r[:min_len], r_vcd[:min_len])
+results.append(compare_signals(r, "R full precision", r_vcd, "R VCD", plot=plot))
 
 
 # Moving sum truncate
@@ -169,8 +189,9 @@ r_truncated_vcd = load_axi_signal_from_vcd(
     bus_size=16,
     is_complex=False
 )
-min_len = min(len(r_truncated), len(r_truncated_vcd))
-simulation_vs_vcd_results["R truncated"] = compare_signals(r_truncated[:min_len], r_truncated_vcd[:min_len])
+results.append(compare_signals(r, "R full precision", r_truncated, "R truncated", plot=plot))
+results.append(compare_signals(r, "R full precision", r_truncated_vcd, "R truncated VCD", plot=plot))
+results.append(compare_signals(r_truncated, "R truncated", r_truncated_vcd, "R truncated VCD", plot=plot))
 
 
 
@@ -178,8 +199,9 @@ simulation_vs_vcd_results["R truncated"] = compare_signals(r_truncated[:min_len]
 # Metric calculator #
 #####################
 # Metric P squared
-p_squared = np.abs(p_truncated) ** 2
-p_squared_vcd = load_axi_signal_from_vcd(
+p_sqared = np.abs(p) ** 2
+p_truncated_squared = np.abs(p_truncated) ** 2
+p_truncated_squared_vcd = load_axi_signal_from_vcd(
     vcd_file, 
     "rfnoc_block_schmidl_cox_tb.dut.mc0.abs2_p_tdata[31:0]",
     "rfnoc_block_schmidl_cox_tb.dut.mc0.abs2_p_tvalid",
@@ -188,14 +210,16 @@ p_squared_vcd = load_axi_signal_from_vcd(
     bus_size=32,
     is_complex=False
 )
-p_squared_vcd = p_squared_vcd[1:] # Experimental remark: vcd is 1 sample ahead
-min_len = min(len(p_squared), len(p_squared_vcd))
-simulation_vs_vcd_results["P squared"] = compare_signals(p_squared[:min_len], p_squared_vcd[:min_len])
+p_truncated_squared_vcd = p_truncated_squared_vcd[1:] # Experimental remark: vcd is 1 sample ahead
+results.append(compare_signals(p_sqared, "P squared full precision", p_truncated_squared, "P squared truncated", plot=plot))
+results.append(compare_signals(p_sqared, "P squared full precision", p_truncated_squared_vcd, "P squared truncated VCD", plot=plot))
+results.append(compare_signals(p_truncated_squared, "P truncated squared", p_truncated_squared_vcd, "P truncated squared VCD", plot=plot))
 
 
 # Metric Y R squared
-r_squared = (r_truncated * r_truncated) / 32 #? Why
-r_squared_vcd = load_axi_signal_from_vcd(
+r_squared = np.abs(r) ** 2 / 32 #? Factor 2^5
+r_truncated_squared = (r_truncated * r_truncated) / 32 #? Factor 2^5
+r_truncated_squared_vcd = load_axi_signal_from_vcd(
     vcd_file, 
     "rfnoc_block_schmidl_cox_tb.dut.mc0.abs2_r_tdata[31:0]",
     "rfnoc_block_schmidl_cox_tb.dut.mc0.abs2_r_tvalid",
@@ -204,14 +228,16 @@ r_squared_vcd = load_axi_signal_from_vcd(
     bus_size=32,
     is_complex=False
 )
-r_squared_vcd = r_squared_vcd[1:] # Experimental remark: vcd is 1 sample ahead
-min_len = min(len(r_squared), len(r_squared_vcd))
-simulation_vs_vcd_results["R squared"] = compare_signals(r_squared[:min_len], r_squared_vcd[:min_len])
+r_truncated_squared_vcd = r_truncated_squared_vcd[1:] # Experimental remark: vcd is 1 sample ahead
+results.append(compare_signals(r_squared, "R squared full precision", r_truncated_squared, "R squared truncated", plot=plot))
+results.append(compare_signals(r_squared, "R squared full precision", r_truncated_squared_vcd, "R squared truncated VCD", ))
+results.append(compare_signals(r_truncated_squared, "R truncated squared", r_truncated_squared_vcd, "R truncated squared VCD", plot=plot))
 
 
 # Metric M
-metric_m = np.floor((p_squared * 2 ** 12) / r_squared)
-metric_m_vcd = load_axi_signal_from_vcd(
+m = p_sqared / r_squared
+m_truncated = np.floor((p_truncated_squared * 2 ** 12) / r_truncated_squared)
+m_truncated_vcd = load_axi_signal_from_vcd(
     vcd_file, 
     "rfnoc_block_schmidl_cox_tb.dut.mc0.metric_quotient_tdata[31:0]",
     "rfnoc_block_schmidl_cox_tb.dut.mc0.metric_quotient_tvalid",
@@ -220,13 +246,15 @@ metric_m_vcd = load_axi_signal_from_vcd(
     bus_size=32,
     is_complex=False
 )
-min_len = min(len(metric_m), len(metric_m_vcd))
-simulation_vs_vcd_results["M"] = compare_signals(metric_m[:min_len], metric_m_vcd[:min_len])
+results.append(compare_signals(m, "M full precision", m_truncated, "M truncated", plot=plot))
+results.append(compare_signals(m, "M full precision", m_truncated_vcd, "M truncated VCD", plot=plot))
+results.append(compare_signals(m_truncated, "M truncated", m_truncated_vcd, "M truncated VCD", plot=plot))
 
 
 # Metric N
-metric_n = moving_sum(metric_m, CP)
-metric_n_vcd = load_axi_signal_from_vcd(
+n = moving_sum(m, CP)
+n_truncated = moving_sum(m_truncated, CP)
+n_truncated_vcd = load_axi_signal_from_vcd(
     vcd_file, 
     "rfnoc_block_schmidl_cox_tb.dut.mc0.m_tdata[39:0]",
     "rfnoc_block_schmidl_cox_tb.dut.mc0.m_tvalid",
@@ -235,15 +263,15 @@ metric_n_vcd = load_axi_signal_from_vcd(
     bus_size=40,
     is_complex=False
 )
-print_idx = 2300
-print_len = 10
-min_len = min(len(metric_n), len(metric_n_vcd))
-simulation_vs_vcd_results["N"] = compare_signals(metric_n[:min_len], metric_n_vcd[:min_len])
+results.append(compare_signals(n, "N full precision", n_truncated, "N truncated", plot=plot))
+results.append(compare_signals(n, "N full precision", n_truncated_vcd, "N truncated VCD", plot=plot))
+results.append(compare_signals(n_truncated, "N truncated", n_truncated_vcd, "N truncated VCD", plot=plot))
+
 
 
 ###########
 # Results #
 ###########
-df = pd.DataFrame.from_dict(simulation_vs_vcd_results, orient='index')
-df.to_csv("results/simulation_vs_vcd.csv")
+df = pd.DataFrame.from_records(results)
+df.to_csv("results/results.csv", index=False)
 print(df)
