@@ -131,12 +131,12 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
         std::cerr << "Error: Invalid output format '" << format << "'. Must be 'sc16' or 'fc32' or 'int32'." << std::endl;
         return EXIT_FAILURE;
     }
-    if (sc_output_select > 1 && format != "int32") {
-        std::cerr << "Error: Invalid output format '" << format << "' for Schmidl & Cox output select {2, 3}. Must be 'int32'." << std::endl;
+    if (sc_output_select == 3 && format != "int32") {
+        std::cerr << "Error: Invalid output format '" << format << "' for Schmidl & Cox output select {3}. Must be 'int32'." << std::endl;
         return EXIT_FAILURE;
     }
-    if (format == "int32" && sc_output_select < 2) {
-        std::cerr << "Error: Invalid output format '" << format << "' for Schmidl & Cox output select {0, 1}. Must be 'sc16' or 'fc32'." << std::endl;
+    if (format == "int32" && sc_output_select <= 2) {
+        std::cerr << "Error: Invalid output format '" << format << "' for Schmidl & Cox output select {0, 1, 2}. Must be 'sc16' or 'fc32'." << std::endl;
         return EXIT_FAILURE;
     }
     cpu_format = format;
@@ -152,7 +152,7 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
         } else if (sc_output_select == 0b01) {
             output_info = "signal.";
         } else if (sc_output_select == 0b10) {
-            output_info = "metricMSB.";
+            output_info = "signal_detected_idx.";
         } else if (sc_output_select == 0b11) {
             output_info = "metricLSB.";
         } else {
@@ -352,14 +352,6 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
     // Receive Loop
     //--------------------------------------------------------------------------
 
-    std::string out_filename = filename + "_" + datapath + "." + output_info + format + ".dat";
-    std::cout << "Opening output file: " << out_filename << std::endl;
-    std::ofstream outfile(out_filename, std::ios::binary);
-    if (!outfile) {
-        std::cerr << "Error opening output file: " << out_filename << std::endl;
-        return EXIT_FAILURE;
-    }
-
     size_t total_samps_received = 0;
     uhd::rx_metadata_t md;
     float recv_timeout = 3.0f; // Timeout for recv call
@@ -387,7 +379,22 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
 
     std::cout << "\nStarting receive loop for " << nbr_meas << " measurements..." << std::endl;
     for (size_t meas = 0; meas < nbr_meas; ++meas) {
-        std::cout << "\nMeasurement " << meas + 1 << "/" << nbr_meas << ":" << std::endl;
+        std::cout << "Measurement " << meas + 1 << "/" << nbr_meas << ":" << std::endl;
+
+        // Create unique filename for each measurement
+        std::string current_filename;
+        if (nbr_meas > 1) {
+            current_filename = filename + "_" + datapath + "_meas" + std::to_string(meas + 1) + "." + output_info + format + ".dat";
+        } else {
+            current_filename = filename + "_" + datapath + "." + output_info + format + ".dat";
+        }
+
+        std::cout << "Opening output file: " << current_filename << std::endl;
+        std::ofstream outfile(current_filename, std::ios::binary);
+        if (!outfile) {
+            std::cerr << "Error opening output file: " << current_filename << std::endl;
+            return EXIT_FAILURE;
+        }
 
         // Issue stream command for this measurement
         stream_cmd.time_spec = uhd::time_spec_t(); // Reset time spec for stream_now=true
@@ -450,7 +457,9 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
                 break; // Expected end of burst
             }
         }
-        std::cout << "\nMeasurement " << meas + 1 << " finished. Received " << current_meas_samps << " samples." << std::endl;
+        // Close the file for this measurement
+        outfile.close();
+        std::cout << "\nMeasurement " << meas + 1 << " finished. Received " << current_meas_samps << " samples. Saved to " << current_filename << std::endl;
 
         // Wait before next measurement (if applicable)
         if (meas + 1 < nbr_meas) {
@@ -460,7 +469,6 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
         }
     }
 
-    outfile.close();
-    std::cout << "\nDone. Output saved to " << out_filename << std::endl;
+    std::cout << "\nDone. Saved " << nbr_meas << " measurements to files." << std::endl;
     return EXIT_SUCCESS;
 }

@@ -17,7 +17,7 @@ Nt = 4                  # Time domain pilot spacing
 Nf = 1                  # Frequency domain pilot spacing
 random_seed = 42        # Random seed for reproducibility => THIS MUST BE THE SAME AS IN THE `create_tx.py` FILE!
 
-filename = "../tests/rx_samples_schmidl_cox.signal.fc32.dat"  # File to load the received signal
+filename = "../tests/detected/rx_samples_schmidl_cox_meas1.signal.fc32.dat"  # File to load the received signal
 
 # Create the signal
 ofdm_signal = ofdmFrame(K=K, CP=CP, M=M, N=N, preamble_mod=preamble_mod, payload_mod=payload_mod, Nt=Nt, Nf=Nf, random_seed=random_seed)
@@ -25,7 +25,8 @@ ofdm_signal.load_tysmbol_bin(filename, type="fc32")
 ofdm_signal.demodulate_frame()
 ofdm_signal.equalize()
 plot_constellation(ofdm_signal)
-plt.savefig("../tests/constellation.pdf")
+# plt.savefig("../tests/constellation.pdf")
+plt.show()
 
 # Print useful information necessary to run the receiver `rx_to_file` program
 print(f"Signal parameters:")
@@ -44,6 +45,3 @@ digest = hashlib.sha256(data).hexdigest()[:12]
 print(f"Generated signal hash: {digest}")
 
 print(f"BER: {ofdm_signal.compute_ber()}")
-
-# TX COMMAND: ./tx_waveforms_radar --args name=sam subdev "A:0" --ant "TX/RX" --rate 200e6 --freq 3.2e9 --sig_len 29952 --spb 59904 --file "OFDM_frame_1024_128_1_25_BPSK_QPSK.txt" --gain 30 --ref "external"
-# RX COMMAND: ./rx_to_file --nsamps 59904 --datapath raw --format sc16

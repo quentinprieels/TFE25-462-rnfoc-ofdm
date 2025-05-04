@@ -33,6 +33,7 @@ print(f"  preamble_mod: {preamble_mod}")
 print(f"  payload_mod: {payload_mod}")
 print(f"  Nt: {Nt}")
 print(f"  Nf: {Nf}")
+print(f"  Random seed: {random_seed}")
 print(f"  Signal filename: {filename}\n")
 
 
