@@ -27,7 +27,7 @@
 - [ ] Create a benchmark for the OFDM receiver
   - [ ] BER with and without synchronization
   - [ ] Metric difference between simulation and hardware
-- [ ] Find and solve the error in the bus analyzer, why is it not as good as at the beginning?
+- [x] Find and solve the error in the bus analyzer, why is it not as good as at the beginning?
 
 ### FPGA Implementation or ideas
 
