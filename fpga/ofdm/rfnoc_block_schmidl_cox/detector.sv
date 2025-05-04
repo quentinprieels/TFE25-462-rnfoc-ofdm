@@ -46,7 +46,10 @@ logic[31:0] max_val;
 logic[31:0] max_val_counter;
 logic[31:0] nbr_forwarded_samples;
 logic[15:0] rfnoc_packet_length_val;
-logic[31:0] detected_ix;
+logic[15:0] rfnoc_packet_length_allframe_val;
+logic[31:0] searching_idx;
+logic[31:0] detected_idx;
+logic[31:0] maximum_idx;
 logic is_valid;
 typedef enum logic[1:0] {
   SEARCHING = 0,  // 00
@@ -70,7 +73,12 @@ always @(posedge clk) begin
     nbr_forwarded_samples <= 0;
     is_valid <= 0;
     rfnoc_packet_length_val <= 16'd1;
-    detected_ix <= 0;
+    
+    rfnoc_packet_length_allframe_val <= 16'd1;
+    searching_idx <= 0;
+    detected_idx <= 0;
+    maximum_idx <= 0;
+    
   end
 
   // State transitions
@@ -87,12 +95,19 @@ always @(posedge clk) begin
     is_valid <= is_valid;
     rfnoc_packet_length_val <= rfnoc_packet_length_val;
 
-    // Detection idx
-    if (m_tvalid) begin
-      detected_ix <= detected_ix + 1;
+    // Idx computation
+    if (i_tvalid) begin
+      if (i_tlast) begin
+        rfnoc_packet_length_allframe_val <= 16'd1;
+      end else begin
+        rfnoc_packet_length_allframe_val <= rfnoc_packet_length_allframe_val + 1;
+      end
     end else begin
-      detected_ix <= detected_ix;
+      rfnoc_packet_length_allframe_val <= rfnoc_packet_length_allframe_val;
     end
+    searching_idx <= searching_idx;
+    detected_idx <= detected_idx;
+    maximum_idx <= maximum_idx;
 
     case (current_state)
       // SEARCHING state: waiting for metric to exceed threshold
@@ -103,6 +118,12 @@ always @(posedge clk) begin
             current_state <= DETECTING;
             max_val <= m_tdata;
             max_val_counter <= MAX_COUNT - 1;
+            detected_idx <= 2; // ! Fix because it needs 1 cyle for the maximum idx
+          end 
+          
+          // In searching state
+          else begin 
+            searching_idx <= searching_idx + 1;
           end
         end
       end
@@ -115,9 +136,11 @@ always @(posedge clk) begin
             if (m_tdata >= max_val) begin // Check for new maximum value
               max_val <= m_tdata;
               max_val_counter <= MAX_COUNT - 1;
+              maximum_idx <= searching_idx + detected_idx;
             end else begin
               max_val_counter <= max_val_counter - 1;
             end
+            detected_idx <= detected_idx + 1;
           end
 
           // Metric is too small => detected state
@@ -172,7 +195,11 @@ always @(posedge clk) begin
             nbr_forwarded_samples <= 0;
             is_valid <= 0;
             rfnoc_packet_length_val <= 16'd1;
-            detected_ix <= 0;
+
+            rfnoc_packet_length_allframe_val <= 16'd1;
+            searching_idx <= 0;
+            detected_idx <= 0;
+            maximum_idx <= 0;
           end
         end
       end
@@ -184,6 +211,9 @@ always @(posedge clk) begin
         nbr_forwarded_samples <= 0;
         is_valid <= 0;
         rfnoc_packet_length_val <= 16'd1;
+        searching_idx <= 0;
+        detected_idx <= 0;
+        maximum_idx <= 0;
       end
     endcase
   end
@@ -211,10 +241,10 @@ always_comb begin
       selected_o_tvalid = i_tvalid & is_valid;
       selected_o_tlast = is_valid ? (i_tlast || is_last_forwarded_sample): is_last_forwarded_sample;
     end
-    2'b10: begin // metric MSB
-      selected_o_tdata = m_tdata[M_TDATA_WIDTH-1 -: 32];
-      selected_o_tvalid = m_tvalid;
-      selected_o_tlast = m_tlast;
+    2'b10: begin // Test sequence: forward the entire frame, last sample is replaced by the maximum_idx
+      selected_o_tdata = is_last_forwarded_sample ? maximum_idx : i_tdata;
+      selected_o_tvalid = i_tvalid;
+      selected_o_tlast = i_tlast || is_last_forwarded_sample;
     end
     2'b11: begin // metric LSB
       selected_o_tdata = m_tdata[31:0];
@@ -235,6 +265,6 @@ assign o_tlast = selected_o_tlast;
 assign i_tready = o_tready & fsm_ready;
 assign m_tready = o_tready & fsm_ready;
 assign end_of_ofdm_packet = is_last_forwarded_sample;
-assign rfnoc_packet_length = rfnoc_packet_length_val;
+assign rfnoc_packet_length = output_select == 2'b10 ? rfnoc_packet_length_allframe_val : rfnoc_packet_length_val;
 
 endmodule // detector

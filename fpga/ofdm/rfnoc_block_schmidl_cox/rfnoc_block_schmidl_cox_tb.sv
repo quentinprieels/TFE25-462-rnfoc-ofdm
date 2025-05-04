@@ -370,10 +370,10 @@ module rfnoc_block_schmidl_cox_tb;
     // process_file_test("Reading IQ samples from binary file and processing with zero signal when invalid", 32'b00, 1ms);
 
     // Test 1: IQ samples with signal (output_select = 1)
-    process_file_test("Reading IQ samples from binary file and processing", 32'b01, 50us);
+    process_file_test("Reading IQ samples from binary file and processing", 32'b01, 75us);
 
-    // Test 2: Metric samples MSB (output_select = 2) 
-    // process_file_test("Reading Metric samples MSB", 32'b10);
+    // Test 2: Whole packetized frame, with detection index as the last sample (output_select = 2)
+    //process_file_test("Fowading frame in test mode", 32'b10, 75us); 
 
     // Test 3: Metric samples LSB (output_select = 3)
     // process_file_test("Reading Metric samples LSB", 32'b11);

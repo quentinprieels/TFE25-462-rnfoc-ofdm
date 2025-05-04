@@ -252,7 +252,7 @@ module rfnoc_block_schmidl_cox #(
   //-------------------------------------
   localparam int FFT_SIZE = 1024;
   localparam int CP_SIZE = 128;
-  localparam int OVERSAMPLING = 1;
+  localparam int OVERSAMPLING = 5;
 
   wire [32+$clog2((CP_SIZE * OVERSAMPLING)+1)-1:0] m_tdata;
   wire m_tlast, m_tvalid, m_tready;
@@ -363,7 +363,7 @@ module rfnoc_block_schmidl_cox #(
   );
 
   always_comb begin
-    if (output_select == 2'b01) begin
+    if (output_select == 2'b01 || output_select == 2'b10) begin
       s_out_axis_ttimestamp = out_ttimestamp;
       s_out_axis_thas_time = out_thas_time;
       s_out_axis_tlength = packet_len;
