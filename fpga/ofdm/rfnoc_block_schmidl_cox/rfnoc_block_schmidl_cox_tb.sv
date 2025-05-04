@@ -173,13 +173,13 @@ module rfnoc_block_schmidl_cox_tb;
     test.start_test(test_name, test_timeout);
 
     // Configure the block
-    blk_ctrl.reg_write(REG_PACKET_SIZE_ADDR, 32'd34560);
+    blk_ctrl.reg_write(REG_PACKET_SIZE_ADDR, 32'd2304); 
     blk_ctrl.reg_write(REG_THRESHOLD_ADDR, 32'h00200000);
     blk_ctrl.reg_write(REG_OUTPUT_SELECT_ADDR, output_select_value);
     
     // File containing IQ samples in sc16 format
-    input_filename = "/export/home/usrpconfig/Documents/GitHub/TFE25-462/rfnoc-ofdm/tests/rx_samples_raw.sc16.dat";
-    output_input_filename = "/export/home/usrpconfig/Documents/GitHub/TFE25-462/rfnoc-ofdm/tests/rx_samples_raw_out.sc16.dat";
+    input_filename = "/export/home/usrpconfig/Documents/GitHub/TFE25-462/rfnoc-ofdm/tests/small/rx_samples_raw.sc16.dat";
+    output_input_filename = "/export/home/usrpconfig/Documents/GitHub/TFE25-462/rfnoc-ofdm/tests/small/rx_samples_raw_out.sc16.dat";
 
     // Open the input file for reading in binary mode
     input_file = $fopen(input_filename, "rb");
@@ -367,10 +367,10 @@ module rfnoc_block_schmidl_cox_tb;
     //--------------------------------
 
     // Test 0: IQ samples (output_select = 0)
-    process_file_test("Reading IQ samples from binary file and processing with zero signal when invalid", 32'b00, 1ms);
+    // process_file_test("Reading IQ samples from binary file and processing with zero signal when invalid", 32'b00, 1ms);
 
     // Test 1: IQ samples with signal (output_select = 1)
-    // process_file_test("Reading IQ samples from binary file and processing", 32'b01, 1ms);
+    process_file_test("Reading IQ samples from binary file and processing", 32'b01, 50us);
 
     // Test 2: Metric samples MSB (output_select = 2) 
     // process_file_test("Reading Metric samples MSB", 32'b10);

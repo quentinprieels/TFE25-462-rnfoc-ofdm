@@ -252,7 +252,7 @@ module rfnoc_block_schmidl_cox #(
   //-------------------------------------
   localparam int FFT_SIZE = 1024;
   localparam int CP_SIZE = 128;
-  localparam int OVERSAMPLING = 5;
+  localparam int OVERSAMPLING = 1;
 
   wire [32+$clog2((CP_SIZE * OVERSAMPLING)+1)-1:0] m_tdata;
   wire m_tlast, m_tvalid, m_tready;

@@ -46,6 +46,7 @@ logic[31:0] max_val;
 logic[31:0] max_val_counter;
 logic[31:0] nbr_forwarded_samples;
 logic[15:0] rfnoc_packet_length_val;
+logic[31:0] detected_ix;
 logic is_valid;
 typedef enum logic[1:0] {
   SEARCHING = 0,  // 00
@@ -60,81 +61,84 @@ always @(posedge clk) begin
   
   // Reset
   if (reset | clear) begin
+    fsm_ready <= 0;
+    is_last_forwarded_sample <= 0;
+
     current_state <= SEARCHING;
     max_val <= 0;
     max_val_counter <= MAX_COUNT;
     nbr_forwarded_samples <= 0;
     is_valid <= 0;
-    fsm_ready <= 0;
-    is_last_forwarded_sample <= 0;
     rfnoc_packet_length_val <= 16'd1;
+    detected_ix <= 0;
   end
 
   // State transitions
   else begin
+    // Default values
     fsm_ready <= 1;
-    is_last_forwarded_sample <= 0; // By default, not the last sample
+    is_last_forwarded_sample <= 0;
+
+    // Keep the current state and values by default
+    current_state <= current_state;
+    max_val <= max_val;
+    max_val_counter <= max_val_counter;
+    nbr_forwarded_samples <= nbr_forwarded_samples;
+    is_valid <= is_valid;
+    rfnoc_packet_length_val <= rfnoc_packet_length_val;
+
+    // Detection idx
+    if (m_tvalid) begin
+      detected_ix <= detected_ix + 1;
+    end else begin
+      detected_ix <= detected_ix;
+    end
 
     case (current_state)
-      // Searching state: waiting for metric to exceed threshold
+      // SEARCHING state: waiting for metric to exceed threshold
       SEARCHING: begin
         if (m_tvalid) begin
+          // Metric is high enough => start detecting
           if (m_tdata > threshold) begin
             current_state <= DETECTING;
             max_val <= m_tdata;
             max_val_counter <= MAX_COUNT - 1;
-            nbr_forwarded_samples <= 0;
-            is_valid <= 0;
-            rfnoc_packet_length_val <= 16'd1;
-          end else begin
-            current_state <= SEARCHING;
-            max_val <= 0;
-            max_val_counter <= MAX_COUNT;
-            nbr_forwarded_samples <= 0;
-            is_valid <= 0;
-            rfnoc_packet_length_val <= 16'd1;
           end
         end
       end
 
-      // Detecting state: find the maximum value and
-      // decrement the counter holding the number of sample between
-      // the maximum value and the next OFDM symbol
+
+      // DETECTING state: find the maximum value
       DETECTING: begin
         if (m_tvalid) begin
           if (m_tdata > threshold) begin
-            current_state <= DETECTING;
-            rfnoc_packet_length_val <= 16'd1;
-
-            // Check if the maximum value is reached
-            if (m_tdata >= max_val) begin
+            if (m_tdata >= max_val) begin // Check for new maximum value
               max_val <= m_tdata;
               max_val_counter <= MAX_COUNT - 1;
             end else begin
-              max_val <= max_val;
               max_val_counter <= max_val_counter - 1;
             end
+          end
 
-          end else begin
-            current_state <= DETECTED; // End of detection
-            max_val <= max_val;
+          // Metric is too small => detected state
+          else begin
+            current_state <= DETECTED;
             max_val_counter <= max_val_counter - 1;
           end
         end
       end
 
-      // Detected state: wait for the counter to reach 0
+
+      // DETECTED state: wait for the counter to reach 0
       DETECTED: begin
         if (m_tvalid) begin
           if (max_val_counter > 0) begin
-            current_state <= DETECTED;
-            max_val <= max_val;
             max_val_counter <= max_val_counter - 1;
-            nbr_forwarded_samples <= 0;
-            is_valid <= 0;
-            rfnoc_packet_length_val <= 16'd1;
-          end else begin
-            current_state <= FORWARDING; // Start forwarding
+          end 
+          
+          // Counter reached 0 => start forwarding (current sample is valid !)
+          else begin
+            current_state <= FORWARDING;
             max_val <= 0;
             max_val_counter <= MAX_COUNT;
             nbr_forwarded_samples <= 1;
@@ -144,31 +148,31 @@ always @(posedge clk) begin
         end
       end
 
-      // Forwarding state: forward the samples until the packet length is reached
+      // FORWARDING state: forward samples until packet_length is reached
       FORWARDING: begin
         if (m_tvalid) begin
           if (nbr_forwarded_samples < packet_length) begin
-            current_state <= FORWARDING;
-            max_val <= 0;
-            max_val_counter <= MAX_COUNT;
+            // Check for last sample
             if (nbr_forwarded_samples + 1 == packet_length) begin
-              is_last_forwarded_sample <= 1; // Last sample to be forwarded
+              is_last_forwarded_sample <= 1;
             end
+            // Update packet lenght
             if (i_tlast) begin
               rfnoc_packet_length_val <= 16'd1;
             end else begin
               rfnoc_packet_length_val <= rfnoc_packet_length_val + 1;
             end
             nbr_forwarded_samples <= nbr_forwarded_samples + 1;
-            is_valid <= 1;
+          
+          // Reset the state machine for the next packet
           end else begin
             current_state <= SEARCHING;
             max_val <= 0;
             max_val_counter <= MAX_COUNT;
             nbr_forwarded_samples <= 0;
             is_valid <= 0;
-            is_last_forwarded_sample <= 0;
             rfnoc_packet_length_val <= 16'd1;
+            detected_ix <= 0;
           end
         end
       end
@@ -179,7 +183,6 @@ always @(posedge clk) begin
         max_val_counter <= MAX_COUNT;
         nbr_forwarded_samples <= 0;
         is_valid <= 0;
-        is_last_forwarded_sample <= 0;
         rfnoc_packet_length_val <= 16'd1;
       end
     endcase
@@ -206,7 +209,7 @@ always_comb begin
     2'b01: begin // i_tdata, only when valid
       selected_o_tdata = i_tdata;
       selected_o_tvalid = i_tvalid & is_valid;
-      selected_o_tlast = is_valid ? i_tlast || is_last_forwarded_sample: is_last_forwarded_sample;
+      selected_o_tlast = is_valid ? (i_tlast || is_last_forwarded_sample): is_last_forwarded_sample;
     end
     2'b10: begin // metric MSB
       selected_o_tdata = m_tdata[M_TDATA_WIDTH-1 -: 32];
