@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-from complex_signal import complexSignal, read_sc16_file, moving_sum
+from complex_signal import read_sc16_file, moving_sum, truncate_complex_to_16_bits, truncate_real_to_16_bits, clip_complex_to_16_bits, clip_real_to_16_bits
 from metrics import compare_signals
 from vcd_helpers import load_axi_signal_from_vcd
 
@@ -12,7 +12,7 @@ K = 1024
 L = K // 2
 CP = 128
 
-results = {} # Fromat: {signal: {metric1: value1, metric2: value2, ...}, ...}
+simulation_vs_vcd_results = {} # Fromat: {signal: {metric1: value1, metric2: value2, ...}, ...}
 
 ###########################
 # Symbol auto-correlation #
@@ -30,7 +30,7 @@ input_vcd = load_axi_signal_from_vcd(
     )
 input_vcd = input_vcd[1:] # Experimental remark: vcd is 1 sample ahead
 min_len = min(len(input), len(input_vcd))
-results["Input signal"] = compare_signals(input[:min_len], input_vcd[:min_len])
+simulation_vs_vcd_results["Input signal"] = compare_signals(input[:min_len], input_vcd[:min_len])
 
 
 # Delay by L samples
@@ -46,7 +46,7 @@ delayed_by_L_vcd = load_axi_signal_from_vcd(
 )
 delayed_by_L_vcd = delayed_by_L_vcd[1:] # Experimental remark: vcd is 1 sample ahead
 min_len = min(len(delayed_by_L), len(delayed_by_L_vcd))
-results["Delayed by L"] = compare_signals(delayed_by_L[:min_len], delayed_by_L_vcd[:min_len])
+simulation_vs_vcd_results["Delayed by L"] = compare_signals(delayed_by_L[:min_len], delayed_by_L_vcd[:min_len])
 
 
 # Conjugate the delayed signal
@@ -62,7 +62,7 @@ delayed_conjugate_vcd = load_axi_signal_from_vcd(
 )
 delayed_conjugate_vcd =  delayed_conjugate_vcd[1:] # Experimental remark: vcd is 1 sample ahead
 min_len = min(len(delayed_conjugate), len(delayed_conjugate_vcd))
-results["Delayed and conjugate"] = compare_signals(delayed_conjugate[:min_len], delayed_conjugate_vcd[:min_len])
+simulation_vs_vcd_results["Delayed and conjugate"] = compare_signals(delayed_conjugate[:min_len], delayed_conjugate_vcd[:min_len])
 
 
 # Multiply conjugate by input
@@ -77,7 +77,7 @@ conjugate_multiplayed_vcd = load_axi_signal_from_vcd(
     is_complex=True
 )
 min_len = min(len(conjugate_multiplayed), len(conjugate_multiplayed_vcd))
-results["Conjugated multiplayed"] = compare_signals(conjugate_multiplayed[:min_len], conjugate_multiplayed_vcd[:min_len])
+simulation_vs_vcd_results["Conjugated multiplayed"] = compare_signals(conjugate_multiplayed[:min_len], conjugate_multiplayed_vcd[:min_len])
 
 
 # Moving sum to compute the autocorrelation
@@ -92,7 +92,7 @@ p_real_vcd = load_axi_signal_from_vcd(
     is_complex=False
 )
 min_len = min(len(p_real), len(p_real_vcd))
-results["P real"] = compare_signals(p_real[:min_len], p_real_vcd[:min_len])
+simulation_vs_vcd_results["P real"] = compare_signals(p_real[:min_len], p_real_vcd[:min_len])
 
 p_imag = moving_sum(np.imag(conjugate_multiplayed), L)
 p_imag_vcd = load_axi_signal_from_vcd(
@@ -105,14 +105,11 @@ p_imag_vcd = load_axi_signal_from_vcd(
     is_complex=False
 )
 min_len = min(len(p_imag), len(p_imag_vcd))
-results["P imaginary"] = compare_signals(p_imag[:min_len], p_imag_vcd[:min_len])
+simulation_vs_vcd_results["P imaginary"] = compare_signals(p_imag[:min_len], p_imag_vcd[:min_len])
 
 
 # Moving sum truncate
-p_signal = complexSignal()
-p_signal._load(p_real + 1j * p_imag)
-p_signal.truncate_to_16_bits(42)
-p_truncated = p_signal.csignal
+p_truncated = truncate_complex_to_16_bits(p_real + 1j * p_imag, 42)
 p_truncated_vcd = load_axi_signal_from_vcd(
     vcd_file, 
     "rfnoc_block_schmidl_cox_tb.dut.mc0.autocorrelator.p_tdata[31:0]",
@@ -123,7 +120,7 @@ p_truncated_vcd = load_axi_signal_from_vcd(
     is_complex=True
 )
 min_len = min(len(p_truncated), len(p_truncated_vcd))
-results["P truncated"] = compare_signals(p_truncated[:min_len], p_truncated_vcd[:min_len])
+simulation_vs_vcd_results["P truncated"] = compare_signals(p_truncated[:min_len], p_truncated_vcd[:min_len])
 
 
 
@@ -143,7 +140,7 @@ input_magnitude_vcd = load_axi_signal_from_vcd(
 )
 input_magnitude_vcd = input_magnitude_vcd[1:] # Experimental remark: vcd is 1 sample ahead
 min_len = min(len(input_magnitude), len(input_magnitude_vcd))
-results["Input magnitude"] = compare_signals(input_magnitude[:min_len], input_magnitude_vcd[:min_len])
+simulation_vs_vcd_results["Input magnitude"] = compare_signals(input_magnitude[:min_len], input_magnitude_vcd[:min_len])
 
 
 # Moving sum to compute the energy
@@ -158,14 +155,11 @@ r_vcd = load_axi_signal_from_vcd(
     is_complex=False
 )
 min_len = min(len(r), len(r_vcd))
-results["R"] = compare_signals(r[:min_len], r_vcd[:min_len])
+simulation_vs_vcd_results["R"] = compare_signals(r[:min_len], r_vcd[:min_len])
 
 
 # Moving sum truncate
-r_signal = complexSignal()
-r_signal._load(r)
-r_signal.truncate_to_16_bits(42)
-r_truncated = r_signal.real_part
+r_truncated = truncate_real_to_16_bits(r, 42)
 r_truncated_vcd = load_axi_signal_from_vcd(
     vcd_file, 
     "rfnoc_block_schmidl_cox_tb.dut.mc0.energy.o_tdata[15:0]",
@@ -176,7 +170,7 @@ r_truncated_vcd = load_axi_signal_from_vcd(
     is_complex=False
 )
 min_len = min(len(r_truncated), len(r_truncated_vcd))
-results["R truncated"] = compare_signals(r_truncated[:min_len], r_truncated_vcd[:min_len])
+simulation_vs_vcd_results["R truncated"] = compare_signals(r_truncated[:min_len], r_truncated_vcd[:min_len])
 
 
 
@@ -196,7 +190,7 @@ p_squared_vcd = load_axi_signal_from_vcd(
 )
 p_squared_vcd = p_squared_vcd[1:] # Experimental remark: vcd is 1 sample ahead
 min_len = min(len(p_squared), len(p_squared_vcd))
-results["P squared"] = compare_signals(p_squared[:min_len], p_squared_vcd[:min_len])
+simulation_vs_vcd_results["P squared"] = compare_signals(p_squared[:min_len], p_squared_vcd[:min_len])
 
 
 # Metric Y R squared
@@ -212,7 +206,7 @@ r_squared_vcd = load_axi_signal_from_vcd(
 )
 r_squared_vcd = r_squared_vcd[1:] # Experimental remark: vcd is 1 sample ahead
 min_len = min(len(r_squared), len(r_squared_vcd))
-results["R squared"] = compare_signals(r_squared[:min_len], r_squared_vcd[:min_len])
+simulation_vs_vcd_results["R squared"] = compare_signals(r_squared[:min_len], r_squared_vcd[:min_len])
 
 
 # Metric M
@@ -227,7 +221,7 @@ metric_m_vcd = load_axi_signal_from_vcd(
     is_complex=False
 )
 min_len = min(len(metric_m), len(metric_m_vcd))
-results["M"] = compare_signals(metric_m[:min_len], metric_m_vcd[:min_len])
+simulation_vs_vcd_results["M"] = compare_signals(metric_m[:min_len], metric_m_vcd[:min_len])
 
 
 # Metric N
@@ -244,12 +238,12 @@ metric_n_vcd = load_axi_signal_from_vcd(
 print_idx = 2300
 print_len = 10
 min_len = min(len(metric_n), len(metric_n_vcd))
-results["N"] = compare_signals(metric_n[:min_len], metric_n_vcd[:min_len])
+simulation_vs_vcd_results["N"] = compare_signals(metric_n[:min_len], metric_n_vcd[:min_len])
 
 
 ###########
 # Results #
 ###########
-df = pd.DataFrame.from_dict(results, orient='index')
-df.to_csv("results/python_vs_vcd.csv")
+df = pd.DataFrame.from_dict(simulation_vs_vcd_results, orient='index')
+df.to_csv("results/simulation_vs_vcd.csv")
 print(df)

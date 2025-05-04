@@ -69,6 +69,30 @@ class complexSignal:
         csignal = real_part + 1j * imag_part
         self._load(csignal)
 
+def truncate_complex_to_16_bits(signal: np.ndarray, bus_size: int) -> np.ndarray:
+    signal_cls = complexSignal()
+    signal_cls._load(signal)
+    signal_cls.truncate_to_16_bits(bus_size)
+    return signal_cls.csignal
+
+def truncate_real_to_16_bits(signal: np.ndarray, bus_size: int) -> np.ndarray:
+    signal_cls = complexSignal()
+    signal_cls._load(signal)
+    signal_cls.truncate_to_16_bits(bus_size)
+    return signal_cls.real_part
+
+def clip_complex_to_16_bits(signal: np.ndarray) -> np.ndarray:
+    signal_cls = complexSignal()
+    signal_cls._load(signal)
+    signal_cls.clip_to_16_bits()
+    return signal_cls.csignal
+
+def clip_real_to_16_bits(signal: np.ndarray) -> np.ndarray:
+    signal_cls = complexSignal()
+    signal_cls._load(signal)
+    signal_cls.clip_to_16_bits()
+    return signal_cls.real_part
+
 
 def read_sc16_file(filename: str) -> np.ndarray:
     """
