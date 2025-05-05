@@ -7,21 +7,60 @@ from scipy.special import erfc
 
 from .ofdm_frame import ofdmFrame
 
-colors = {
-    "blue": "#7EA6E0",
+# Color palette
+gray = "#9d9d9d"
+red = "#e02b32"
+yellow = "#f0c571"
+blue = "#3d5281"
+green = "#59a89c"
+purple = "#a559aa"
+
+colors = {    
+    # Colors
+    "gray": gray,
+    "purple": purple,
+    "green": green,
+    "yellow": yellow,
+    "red": red,
+    "blue": blue,
+    
+    # Received signal
+    "preamble": green,
+    "pilot": purple,
+    "signal": gray,
+    
+    # Send vs received
+    "send": purple,
+    "received": gray,
+    
+    # Signal / metric
+    "metric": red,
+    "threshold": yellow,
+    "CP": purple,
+    "info": blue,
+    "sync": green,
+    
+    # Mutliple lines
+    "line1": blue,
+    "line2": green,
+    "line3": purple,
+    "line4": red,
+    "line5": yellow,
+    "line6": gray,
+    
+    # Compatibility
     "orange": "#FFB570",
-    "green": "#97D077",
-    "red": "#EA6B66",
-    "purple": "#A680B8",
-    "yellow": "#D6B656",
-    "gray": "#808080",
     "pink": "#B5739D",
 }
+
+# Size
+square = (5, 5)
+classical = (10, 6)
+long = (15, 5)
 
 # Set the default matplotlib parameters
 plt.rcParams['axes.prop_cycle'] = cycler(color=list(colors.values()))
 plt.rcParams['font.family'] = 'sans-serif'
-
 
 def plot_frame_matrix(ofdm_frame: ofdmFrame, view_bits: bool = False, view_title: bool = True) -> None:
     """
@@ -53,14 +92,14 @@ def plot_frame_matrix(ofdm_frame: ofdmFrame, view_bits: bool = False, view_title
     pilot_legend_idx = 1
     preamble_legend_idx = 2 - (2 / 3) / 2
     
-    plt.figure("OFDM frame matrix", figsize=(10, 8))
+    plt.figure("OFDM frame matrix", figsize=classical)
     
     if view_title:
         plt.suptitle("OFDM frame matrix", fontsize=14, fontweight="bold")
         plt.title(f"Parameters: K={ofdm_frame.K}, N={ofdm_frame.N}, Nt={ofdm_frame.Nt}, Nf={ofdm_frame.Nf}", fontsize=10, fontstyle="italic")
     
     sns.heatmap(matrix,
-                cmap=sns.color_palette([colors["blue"], colors["orange"], colors["green"]]),
+                cmap=sns.color_palette([colors["signal"], colors["pilot"], colors["preamble"]]),
                 cbar_kws={"ticks": [0, 1, 2], "format": "%d"},
                 linewidths=0.5,
                 linecolor="black",
@@ -75,11 +114,11 @@ def plot_frame_matrix(ofdm_frame: ofdmFrame, view_bits: bool = False, view_title
     plt.xlabel("Subcarriers (frequency)")
     plt.tight_layout()
 
-def plot_frame_waveform(ofdm_frame: ofdmFrame, use_rx: bool = False, view_title: bool = True, params_for_title: dict = None) -> None:
+def plot_frame_waveform(ofdm_frame: ofdmFrame, use_rx: bool = False, view_title: bool = True, params_for_title: dict = None, symbol_annoation: bool = True) -> None:
     """
     Plot the time domain waveform of the OFDM frame.
     """
-    plt.figure("OFDM Frame", figsize=(15, 5))
+    plt.figure("OFDM Frame", figsize=long)
         
     # Title and subtitle
     title = "OFDM Frame"
@@ -109,7 +148,7 @@ def plot_frame_waveform(ofdm_frame: ofdmFrame, use_rx: bool = False, view_title:
     normalized_frame = np.abs(ofdm_frame.tsymbols) / np.max(np.abs(ofdm_frame.tsymbols))
     if use_rx:
         normalized_frame = np.abs(ofdm_frame.tsymbols_rx) / np.max(np.abs(ofdm_frame.tsymbols_rx))
-    plt.plot(normalized_frame, label="OFDM frame", color=colors["blue"], alpha=0.4)  
+    plt.plot(normalized_frame, label="OFDM frame", color=colors["signal"], alpha=0.4)  
     
     # Signal information (sto, cp, ...)
     preamble_start = 0
@@ -131,15 +170,16 @@ def plot_frame_waveform(ofdm_frame: ofdmFrame, use_rx: bool = False, view_title:
     if ofdm_frame.CP > 0:
         cp_preamble_start = 0
         cp_preamble_end = ofdm_frame.CP * ofdm_frame.M
-        plt.text(cp_preamble_start + (cp_preamble_end - cp_preamble_start) // 2, 0.93 * text_annotation_height, "CP", horizontalalignment='center', clip_on=True, color=colors["orange"])
-        plt.annotate("", xy=(cp_preamble_end, line2_annotation_height), xytext=(cp_preamble_start, line2_annotation_height), arrowprops=dict(arrowstyle="<->", color=colors["orange"]), clip_on=True)
-        plt.vlines(x=cp_preamble_end, ymax=line_annotation_height, linestyles='-.', color=colors["orange"], ymin=0)
-        
-    for i in range(ofdm_frame.N):
-        symbol_start = payload_start + i * (ofdm_frame.CP + ofdm_frame.K) * ofdm_frame.M
-        symbol_end = payload_start + (i + 1) * (ofdm_frame.CP + ofdm_frame.K) * ofdm_frame.M
-        plt.text(symbol_start + (symbol_end - symbol_start) // 2, 0.93 * text_annotation_height, f"Symbol {i}", horizontalalignment='center', clip_on=True, color=colors["blue"])
-        plt.vlines(x=symbol_end, ymax=line_annotation_height, linestyle='--', color=colors["blue"], ymin=0)
+        plt.text(cp_preamble_start + (cp_preamble_end - cp_preamble_start) // 2, 0.93 * text_annotation_height, "CP", horizontalalignment='center', clip_on=True, color=colors["CP"])
+        plt.annotate("", xy=(cp_preamble_end, line2_annotation_height), xytext=(cp_preamble_start, line2_annotation_height), arrowprops=dict(arrowstyle="<->", color=colors["CP"]), clip_on=True)
+        plt.vlines(x=cp_preamble_end, ymax=line_annotation_height, linestyles='-.', color=colors["CP"], ymin=0)
+      
+    if symbol_annoation:  
+        for i in range(ofdm_frame.N):
+            symbol_start = payload_start + i * (ofdm_frame.CP + ofdm_frame.K) * ofdm_frame.M
+            symbol_end = payload_start + (i + 1) * (ofdm_frame.CP + ofdm_frame.K) * ofdm_frame.M
+            plt.text(symbol_start + (symbol_end - symbol_start) // 2, 0.93 * text_annotation_height, f"Symbol {i}", horizontalalignment='center', clip_on=True, color=colors["info"])
+            plt.vlines(x=symbol_end, ymax=line_annotation_height, linestyle='--', color=colors["info"], ymin=0)
         
     if ofdm_frame.CP > 0:
         pass
@@ -161,20 +201,19 @@ def plot_constellation(ofdm_frame: ofdmFrame, view_title: bool = False) -> None:
     }
     subtitle = f"Parameters: {' - '.join(sorted([f'{k}: {v}' for k, v in subtitle_params_values.items()]))}"
     
-    plt.figure(title, figsize=(6, 6))
+    plt.figure(title, figsize=square)
     if view_title:
         plt.suptitle(title, fontsize=14, fontweight="bold")
         plt.title(subtitle, fontsize=10, fontstyle="italic")
-    plt.scatter(np.real(ofdm_frame.fsymbols_payload_rx), np.imag(ofdm_frame.fsymbols_payload_rx), label="Recieved", c=colors["blue"])
-    plt.scatter(np.real(ofdm_frame.fsymbols_payload), np.imag(ofdm_frame.fsymbols_payload), label="Sent", c=colors["orange"], marker="x")
-    plt.xlabel("Real")
+    plt.scatter(np.real(ofdm_frame.fsymbols_payload_rx), np.imag(ofdm_frame.fsymbols_payload_rx), label="Recieved", c=colors["received"], marker="o")
+    plt.scatter(np.real(ofdm_frame.fsymbols_payload), np.imag(ofdm_frame.fsymbols_payload), label="Sent", c=colors["send"], marker="x")
     plt.ylabel("Imaginary")
     plt.xlim(-2, 2)
     plt.ylim(-2, 2)
     plt.xticks(np.arange(-2, 2.1, 0.5))
     plt.yticks(np.arange(-2, 2.1, 0.5))
     plt.grid(True, which='both', linestyle='--')
-    plt.legend()
+    plt.legend(loc='lower right')
     plt.tight_layout()
 
 def plot_ber_vs_snr(ber_results: pd.DataFrame, view_title: bool = True, params: dict = None, theoretical: bool = True) -> None:
@@ -190,7 +229,7 @@ def plot_ber_vs_snr(ber_results: pd.DataFrame, view_title: bool = True, params: 
     qpsk_th = lambda x: 0.5 * erfc(np.sqrt(0.5 * 10 ** (x / 10)))
     
     title = "BER vs SNR"
-    plt.figure(title, figsize=(10, 6))
+    plt.figure(title, figsize=classical)
     if view_title:
         plt.suptitle(title, fontsize=14, fontweight="bold")
         if params is not None:
@@ -205,7 +244,7 @@ def plot_ber_vs_snr(ber_results: pd.DataFrame, view_title: bool = True, params: 
     
     agg_results = ber_results.groupby(["Modulation", "SNR"])["BER"].agg(['mean', 'std']).reset_index()
     modulations = agg_results["Modulation"].unique()
-    palette = sns.color_palette("deep", n_colors=len(modulations))
+    palette = [colors["line1"], colors["line2"], colors["line3"], colors["line4"], colors["line5"], colors["line6"]]
     markers = ['o', 's', 'x', 'd', '^', 'v']
     color_map = dict(zip(modulations, palette))
     marker_map = dict(zip(modulations, markers[:len(modulations)]))
@@ -251,6 +290,6 @@ def plot_ber_vs_snr(ber_results: pd.DataFrame, view_title: bool = True, params: 
     plt.xlabel("SNR [dB]")
     plt.ylabel("Bit Error Rate (BER)")
     plt.ylim(bottom=10**(-6))
-    plt.legend()
+    plt.legend(loc='lower right')
     plt.grid(True, which='both', linestyle='--')
     plt.tight_layout()

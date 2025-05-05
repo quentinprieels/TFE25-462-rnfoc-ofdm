@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 import sys
 sys.path.append('/usr/local/lib/python3.10/site-packages')  # Make sure python find the rfnoc_ofdm package
-from rfnoc_ofdm.plotting import colors
+from rfnoc_ofdm.plotting import colors, long
 
 def rmse(signal1: np.ndarray, signal2: np.ndarray) -> float:
     """
@@ -66,12 +66,12 @@ def compare_signals(signal1: np.ndarray, signal1_name: str, signal2: np.ndarray,
         scale_factor = np.max(np.abs(signal1)) / np.max(np.abs(signal2))
         signal2_scaled = signal2 * scale_factor
         
-        plt.figure(figsize=(10, 6))
-        plt.plot(np.abs(signal1), label=f"{signal1_name}", color=colors["blue"])
-        plt.plot(np.abs(signal2_scaled), label=f"{signal2_name} (scaled)", linestyle='--', color=colors["orange"])
+        plt.figure(figsize=long)
+        plt.plot(np.abs(signal1), label=f"{signal1_name}", color=colors["line1"])
+        plt.plot(np.abs(signal2_scaled), label=f"{signal2_name} (scaled)", linestyle='--', color=colors["line2"])
         plt.xlabel("Sample Index")
         plt.ylabel("Normalized Amplitude")
-        plt.legend()
+        plt.legend(loc='lower right')
         plt.grid(linestyle='--')
         plt.tight_layout()
         plt.savefig(f"results/{signal1_name_file}_vs_{signal2_name_file}.pdf")

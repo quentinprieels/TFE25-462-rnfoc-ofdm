@@ -230,7 +230,7 @@ r_truncated_squared_vcd = load_axi_signal_from_vcd(
 )
 r_truncated_squared_vcd = r_truncated_squared_vcd[1:] # Experimental remark: vcd is 1 sample ahead
 results.append(compare_signals(r_squared, "R squared full precision", r_truncated_squared, "R squared truncated", plot=plot))
-results.append(compare_signals(r_squared, "R squared full precision", r_truncated_squared_vcd, "R squared truncated VCD", ))
+results.append(compare_signals(r_squared, "R squared full precision", r_truncated_squared_vcd, "R squared truncated VCD", plot=plot))
 results.append(compare_signals(r_truncated_squared, "R truncated squared", r_truncated_squared_vcd, "R truncated squared VCD", plot=plot))
 
 

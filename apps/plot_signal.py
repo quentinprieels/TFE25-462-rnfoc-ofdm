@@ -1,7 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-filename = "rx_samples_schmidl_cox.signal.fc32.dat"
+import sys
+sys.path.append('/usr/local/lib/python3.10/site-packages')  # Make sure python find the rfnoc_ofdm package
+from rfnoc_ofdm.plotting import colors
+
+filename = "../tests/rx_samples_schmidl_cox.signal.fc32.dat"
 is_binary = True
 format = "fc32"
 max_idx_in_last_symbol = False
@@ -58,23 +62,23 @@ def plot_received_signal(rx_sig: np.ndarray) -> None:
     fig, axs = plt.subplots(3, 1, figsize=(10, 10), sharex=True)
     fig.suptitle('Received Signal', fontsize=14, fontweight='bold')
 
-    axs[0].plot(np.abs(rx_sig))
+    axs[0].plot(np.abs(rx_sig), color=colors["signal"])
     axs[0].set_ylabel('Amplitude $|rx[n]|$')
     axs[0].set_title('Magnitude')
     axs[0].grid(linestyle='--')
     
     if max_idx_in_last_symbol:
         detected_point, start_forwaring, _ = print_last_sample_as_uint32(signal)
-        axs[0].axvline(x=detected_point, color='r', linestyle='--', label='Detected Point')
-        axs[0].axvline(x=start_forwaring, color='g', linestyle='--', label='Start Forwarding')
+        axs[0].axvline(x=detected_point, color=colors["sync"], linestyle='--', label='Detected Point')
+        axs[0].axvline(x=start_forwaring, color=colors["CP"], linestyle='--', label='Start Forwarding')
 
     axs[1].plot(np.real(rx_sig))
     axs[1].set_ylabel('Amplitude $\mathcal{R}{rx[n]}$')
     axs[1].set_title('Real Part')
     axs[1].grid(linestyle='--')
     if max_idx_in_last_symbol:
-        axs[1].axvline(x=detected_point, color='r', linestyle='--', label='Detected Point')
-        axs[1].axvline(x=start_forwaring, color='g', linestyle='--', label='Start Forwarding')
+        axs[1].axvline(x=detected_point, color=colors["sync"], linestyle='--', label='Detected Point')
+        axs[1].axvline(x=start_forwaring, color=colors["CP"], linestyle='--', label='Start Forwarding')
 
     axs[2].plot(np.imag(rx_sig))
     axs[2].set_xlabel('Sample Index [n]')
@@ -82,8 +86,8 @@ def plot_received_signal(rx_sig: np.ndarray) -> None:
     axs[2].set_title('Imaginary Part')
     axs[2].grid(linestyle='--')
     if max_idx_in_last_symbol:
-        axs[2].axvline(x=detected_point, color='r', linestyle='--', label='Detected Point')
-        axs[2].axvline(x=start_forwaring, color='g', linestyle='--', label='Start Forwarding')
+        axs[2].axvline(x=detected_point, color=colors["sync"], linestyle='--', label='Detected Point')
+        axs[2].axvline(x=start_forwaring, color=colors["CP"], linestyle='--', label='Start Forwarding')
         axs[2].legend(loc='lower right')
     plt.tight_layout()
 
@@ -99,5 +103,5 @@ else:
 
 print(f"Signal shape: {signal.shape}")
 plot_received_signal(signal)
-# plt.savefig("../tests/received_signal.pdf")
+plt.savefig("../tests/received_signal.pdf")
 plt.show()

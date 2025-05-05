@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import sys
 sys.path.append('/usr/local/lib/python3.10/site-packages')  # Make sure python find the rfnoc_ofdm package
 from rfnoc_ofdm.ofdm_frame import ofdmFrame
+from rfnoc_ofdm.plotting import colors
 from rfnoc_ofdm.metric_calculator import metric_schmidl, moving_sum
 from rfnoc_ofdm.detector import find_max_idx
 
@@ -42,11 +43,11 @@ def plot_frame_with_indexes(ofdm_frame: ofdmFrame, detected_point: int, detectio
         plt.title("Received Signal", fontsize=14, fontweight='bold')
     
     # Left y-axis (signal amplitude)
-    line1, = ax1.plot(np.abs(ofdm_frame.tsymbols_rx), alpha=0.5, label="Received Signal")
-    line2, = ax1.plot([], [], color='r', linestyle='--', label="Detected Point by FPGA")
-    line3, = ax1.plot([], [], color='g', linestyle='--', label="Detected Point by simulation")
-    ax1.axvline(x=detected_point, color='r', linestyle='--')
-    ax1.axvline(x=detection_idx_schmidl, color='g', linestyle='--')
+    line1, = ax1.plot(np.abs(ofdm_frame.tsymbols_rx), alpha=0.5, label="Received Signal", color=colors["signal"])
+    line2, = ax1.plot([], [], linestyle='--', label="Detected Point by FPGA", color=colors["sync"])
+    line3, = ax1.plot([], [], linestyle='--', label="Detected Point by simulation", color=colors["CP"])
+    ax1.axvline(x=detected_point, linestyle='--', color=colors["sync"])
+    ax1.axvline(x=detection_idx_schmidl, linestyle='--', color=colors["CP"])
     ax1.set_xlabel("Sample Index")
     ax1.set_ylabel("Amplitude")
     ax1.grid(linestyle='--')
@@ -54,9 +55,9 @@ def plot_frame_with_indexes(ofdm_frame: ofdmFrame, detected_point: int, detectio
     # Right y-axis (metric values)
     if metric is not None:
         ax2 = ax1.twinx()
-        line4, = ax2.plot(metric, color='orange', label="Schmidl N metric")
-        line5, = ax2.plot([], [], color='purple', linestyle='-.', label="Threshold")
-        ax2.axhline(y=threshold, color='purple', linestyle='-.')
+        line4, = ax2.plot(metric, color=colors['metric'], label="Schmidl N metric")
+        line5, = ax2.plot([], [], color=colors['threshold'], linestyle='-.', label="Threshold")
+        ax2.axhline(y=threshold, color=colors['threshold'], linestyle='-.')
         ax2.set_ylabel("Metric Value")
     
         # Combine legends from both axes
@@ -163,7 +164,7 @@ print(bers_df)
 # Plot the histogram of the detected point error
 plt.figure(figsize=(10, 6))
 # plt.title("Histogram of Detected Point Error", fontsize=14, fontweight='bold')
-plt.hist(detected_point_errors, bins=50)
+plt.hist(detected_point_errors, bins=50, color=colors["line1"])
 plt.xlabel("Detected Point Error (samples)")
 plt.ylabel("Frequency")
 plt.grid(linestyle='--')

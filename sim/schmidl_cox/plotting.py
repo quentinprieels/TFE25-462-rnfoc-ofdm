@@ -5,26 +5,26 @@ import matplotlib.pyplot as plt
 import sys
 sys.path.append('/usr/local/lib/python3.10/site-packages')  # Make sure python find the rfnoc_ofdm package
 from rfnoc_ofdm.ofdm_frame import ofdmFrame
-from rfnoc_ofdm.plotting import plot_frame_waveform, colors
+from rfnoc_ofdm.plotting import plot_frame_waveform, colors, classical 
 
 
 def plot_schmidl_cox(ofdm_frame: ofdmFrame, metric: tuple[np.ndarray, str], threshold: float, sync_idx: int = None,
                      info: tuple[np.ndarray, str] = None, other_subtitles: dict = None, use_rx_symbols: bool = True,
-                     limitate: bool = False, view_title: bool = True) -> None:
+                     limitate: bool = False, view_title: bool = False) -> None:
     
     line_annotation_height = 1.1
     line2_annotation_height = 1.025
     text_annotation_height = 1.12
     
     # Annotated frame
-    plot_frame_waveform(ofdm_frame, view_title=False, use_rx=True)
+    plot_frame_waveform(ofdm_frame, view_title=False, use_rx=True, symbol_annoation=False)
     
     # CP copied
     cp_copied_preamble_start = ofdm_frame.K * ofdm_frame.M
     cp_copied_preamble_end = (ofdm_frame.CP + ofdm_frame.K) * ofdm_frame.M
-    plt.text(cp_copied_preamble_start + (cp_copied_preamble_end - cp_copied_preamble_start) // 2, 0.93 * text_annotation_height, "CP cpy", horizontalalignment='center', clip_on=True, color=colors["orange"])
-    plt.annotate("", xy=(cp_copied_preamble_end, line2_annotation_height), xytext=(cp_copied_preamble_start, line2_annotation_height), arrowprops=dict(arrowstyle="<->", color=colors["orange"]), clip_on=True)
-    plt.vlines(x=cp_copied_preamble_start, ymax=line_annotation_height, linestyles='-.', color=colors["orange"], ymin=0)
+    plt.text(cp_copied_preamble_start + (cp_copied_preamble_end - cp_copied_preamble_start) // 2, 0.93 * text_annotation_height, "CP cpy", horizontalalignment='center', clip_on=True, color=colors["CP"])
+    plt.annotate("", xy=(cp_copied_preamble_end, line2_annotation_height), xytext=(cp_copied_preamble_start, line2_annotation_height), arrowprops=dict(arrowstyle="<->", color=colors["CP"]), clip_on=True)
+    plt.vlines(x=cp_copied_preamble_start, ymax=line_annotation_height, linestyles='-.', color=colors["CP"], ymin=0)
 
     # Title and subtitle
     title = "Schmidl and Cox Synchronization Algorithm"    
@@ -46,14 +46,14 @@ def plot_schmidl_cox(ofdm_frame: ofdmFrame, metric: tuple[np.ndarray, str], thre
     plt.twinx()
     
     # Metric
-    plt.plot(metric[0], color='red', label=metric[1])
+    plt.plot(metric[0], color=colors['metric'], label=metric[1])
     if info is not None:
-        plt.plot(info[0], color='red', label=info[1], linestyle='--')
+        plt.plot(info[0], color=colors['metric'], label=info[1], linestyle='--')
         
-    plt.axhline(y=threshold, color='tab:brown', linestyle=':', label="Threshold")
+    plt.axhline(y=threshold, color=colors['threshold'], linestyle=':', label="Threshold")
     
     if sync_idx is not None:
-        plt.axvline(x=sync_idx, color='tab:green', linestyle='-.', label="Sync index")
+        plt.axvline(x=sync_idx, color=colors['sync'], linestyle='-.', label="Sync index")
     
     # Detection zone
     above_threshold = metric[0] > threshold
@@ -76,11 +76,10 @@ def plot_schmidl_cox(ofdm_frame: ofdmFrame, metric: tuple[np.ndarray, str], thre
     
 # Function to plot CDF
 def plot_cdfs(df: pd.DataFrame, ofdm_frame: ofdmFrame, title: str = "", view_title: bool = False) -> None:
-    plt.figure(figsize=(8, 6))
+    plt.figure(figsize=classical)
     if view_title:
         plt.suptitle(title, fontsize=14, fontweight="bold")
     
-    line_styles = ['-', '--', '-.', ':', '-', '--', '-.']
     all_min = df.min().min()
     all_max = df.max().max()
     
@@ -109,9 +108,10 @@ def plot_cdfs(df: pd.DataFrame, ofdm_frame: ofdmFrame, title: str = "", view_tit
         
         col_idx = list(df.columns).index(column)
         plt.plot(x_extended, y_extended, 
-             linestyle=line_styles[col_idx % len(line_styles)], 
              linewidth=2, 
-             label=column)
+             label=column,
+             color=colors["line" + str(col_idx + 1)],
+             )
     
     # Add the gray area of successful detection
     cp_size = ofdm_frame.CP * ofdm_frame.M
@@ -120,13 +120,13 @@ def plot_cdfs(df: pd.DataFrame, ofdm_frame: ofdmFrame, title: str = "", view_tit
     plt.xlabel('Error Value [index]')
     plt.ylabel('Cumulative Percentage [%]')
     plt.grid(linestyle='--')
-    plt.legend()
+    plt.legend(loc="lower right")
     plt.tight_layout()
 
 
 if __name__ == "__main__":
-    from metric_calculator import metric_schmidl, moving_sum
-    from detector import find_max_idx
+    from rfnoc_ofdm.metric_calculator import metric_schmidl, moving_sum
+    from rfnoc_ofdm.detector import find_max_idx
     
     # Plot example of the Schmidl and Cox metric
     ofdm_frame = ofdmFrame(K=1024, CP=128, M=1, N=2, preamble_mod="BPSK", payload_mod="QPSK", Nt=2, Nf=1024, random_seed=42)

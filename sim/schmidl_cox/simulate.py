@@ -101,9 +101,9 @@ df_results = pd.DataFrame(metric_results)
 df_avg_results = pd.DataFrame(metric_avg_results)  
 
 # Plot both dataframes
-plot_cdfs(df_results, ofdm_frame, view_title=True, title="CDF of Sync Index Error on metrics")
+plot_cdfs(df_results, ofdm_frame, title="CDF of Sync Index Error on metrics")
 plt.savefig("sync_index_error_metrics.pdf")
-plot_cdfs(df_avg_results, ofdm_frame, view_title=True, title="CDF of Sync Index Error on averaged metrics averaged")
+plot_cdfs(df_avg_results, ofdm_frame, title="CDF of Sync Index Error on averaged metrics averaged")
 plt.savefig("sync_index_error_metrics_avg.pdf")
 
 
