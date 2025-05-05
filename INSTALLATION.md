@@ -161,7 +161,7 @@ for the installation directory.
 The AR76780 Patch for Vivado 2022.1 is required to work with the USRP devices.
 
 To install it, download the patch (*AR76780_vivado_2021_1_preliminary_rev1.zip*) from the
-[AMD website](hhttps://adaptivesupport.amd.com/s/article/76780?language=en_US).
+[AMD website](https://adaptivesupport.amd.com/s/article/76780?language=en_US).
 
 Then, extract the content of the archive to the directory where Vivado is installed,
 under the `patches/AR76780` directory.  If you installed Vivado at the recommended directory,
