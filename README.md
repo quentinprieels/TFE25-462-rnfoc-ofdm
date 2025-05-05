@@ -7,7 +7,7 @@ Its main purpose is to provide a partial implementation of an OFDM receiver.
 
 RFNoC is a heterogeneous processing framework that can be used to implement high
 throughput DSP in the FPGA, for Software Defined Radio (SDR) systems, in an
-easy-to-use and flexible way. RFNoC and GNU Radio can be used to implement 
+easy-to-use and flexible way. RFNoC and GNU Radio can be used to implement
 heterogenous DSP systems that can span CPU-based hosts, embedded systems and FPGAs.
 
 RFNoC can be used to implement DSP “flow-graphs” where DSP algorithms and IP blocks
@@ -51,7 +51,7 @@ EttusResearch recommends sticking to this directory structure and file layout.
 * `icores`: Stores full image core files. YAML files in this directory get
   picked up by CMake and get turned into build targets. For example, here we
   include an image core file called `x310_rfnoc_image_core.yml` which defines
-  an X310 image core with the ofdm block included. You can build this image
+  an X310 image core with the OFDM block included. You can build this image
   directly using the image builder, but you can also run `make x310_rfnoc_image_core`
   to build it using `make`.
   These files do not get installed.
@@ -93,12 +93,17 @@ EttusResearch recommends sticking to this directory structure and file layout.
   directory, e.g., `/usr/share/uhd/rfnoc/blocks/*.yml`.
 
 * `sim`: This directory contains the simulation files for the RFNoC blocks or
-  the Schmidl&Cox algorithm. 
+  the Schmidl&Cox algorithm. It is not part of the default structure of a
+  RFNoC OOT module. It contains 2 subdirectories:
+  - `bus_sizes`: An comparison between clipping and truncating buses to
+     reduce their size. The goal is to use the technique that deforms the
+     least the signal.
+  - `schmidl_cox`: Simulation of different synchronization algorithms, based
+    on the Schmidl&Cox algorithm.
 
-* `tests`: This directory contains files used by the block testbenches or 
-  useful files for simulations. It is also used to store tests results of
-  real communication made by USRP's. This directory is not part of the default
-  structure of a RFNoC OOT module.
+* `tests`: This directory contains files used by the block testbenches
+  It is used to store tests results of real communication made by USRP's.
+  This directory is not part of the default structure of a RFNoC OOT module.
 
 ## Building this module
 
