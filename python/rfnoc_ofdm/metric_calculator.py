@@ -1,8 +1,6 @@
 import numpy as np
 
-import sys
-sys.path.append('/usr/local/lib/python3.10/site-packages')  # Make sure python find the rfnoc_ofdm package
-from rfnoc_ofdm.ofdm_frame import ofdmFrame
+from .ofdm_frame import ofdmFrame
 
 """
 Note: The `<name>_metric` functions are designed to be used with the ofdmFrame class.

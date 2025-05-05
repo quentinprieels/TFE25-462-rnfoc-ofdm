@@ -6,9 +6,9 @@ import matplotlib.pyplot as plt
 import sys
 sys.path.append('/usr/local/lib/python3.10/site-packages')  # Make sure python find the rfnoc_ofdm package
 from rfnoc_ofdm.ofdm_frame import ofdmFrame
+from rfnoc_ofdm.metric_calculator import metric_schmidl, metric_minn, metric_wilson, moving_sum
+from rfnoc_ofdm.detector import find_max_idx
 
-from metric_calculator import metric_schmidl, metric_minn, metric_wilson, moving_sum
-from detector import *
 from plotting import plot_cdfs, plot_schmidl_cox
 
 

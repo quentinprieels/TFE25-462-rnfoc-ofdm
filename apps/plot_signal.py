@@ -36,7 +36,7 @@ def load_tysmbol_bin(filename: str, type: str="fc32") -> np.ndarray:
         rx_sig = np.squeeze(rx_sig)
     return rx_sig
 
-def print_last_sample_as_uint32(rx_sig: np.ndarray) -> int:
+def print_last_sample_as_uint32(filename: str) -> tuple:
     """
     Print the last sample of the received signal as uint32 (sc16 format => 2x uint16).
     """
