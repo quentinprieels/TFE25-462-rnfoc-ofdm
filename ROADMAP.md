@@ -24,9 +24,9 @@
 
 - [x] Solve error in the BER after reception => why is there some points not in the constellation?
   This was solved by adding the oversampling factor to the signal like in the default code
-- [ ] Create a benchmark for the OFDM receiver
-  - [ ] BER with and without synchronization
-  - [ ] Metric difference between simulation and hardware
+- [x] Create a benchmark for the OFDM receiver
+  - [x] BER with and without synchronization
+  - [x] Metric difference between simulation and hardware
 - [x] Find and solve the error in the bus analyzer, why is it not as good as at the beginning?
 
 ### FPGA Implementation or ideas
