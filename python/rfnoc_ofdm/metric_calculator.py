@@ -31,7 +31,7 @@ def metric_schmidl(ofdm_frame: ofdmFrame) -> tuple[np.ndarray, np.ndarray, np.nd
     'Robust frequency and timing synchronization for OFDM'.
     """
     y = ofdm_frame.tsymbols_rx
-    L = ofdm_frame.K // 2 * ofdm_frame.M
+    L = (ofdm_frame.K // 2) * ofdm_frame.M
     
     # Initialize the metrics
     frame_length = len(y)
@@ -58,7 +58,7 @@ def metric_minn(ofdm_frame: ofdmFrame) -> tuple[np.ndarray, np.ndarray, np.ndarr
     'On timing offset estimation for OFDM systems'.
     """
     y = ofdm_frame.tsymbols_rx
-    L = ofdm_frame.K // 2 * ofdm_frame.M
+    L = (ofdm_frame.K // 2) * ofdm_frame.M
     
     # Initialize the metrics
     frame_length = len(y)
@@ -85,7 +85,7 @@ def metric_wilson(ofdm_frame: ofdmFrame) -> tuple[np.ndarray, np.ndarray, np.nda
     described in the paper 'A Modified Schmidl-Cox OFDM Timing Detector'.
     """
     y = ofdm_frame.tsymbols_rx
-    L = ofdm_frame.K // 2 * ofdm_frame.M
+    L = (ofdm_frame.K // 2) * ofdm_frame.M
 
     # Initialize the metrics
     frame_length = len(y)
