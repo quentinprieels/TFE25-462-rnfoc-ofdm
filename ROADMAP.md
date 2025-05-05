@@ -16,7 +16,7 @@
 ### Documentation
 
 - [x] Finish the [installation.md](INSTALLATION.md) file
-- [ ] Finish the [building.md](BUILDING.md) file
+- [x] Finish the [building.md](BUILDING.md) file
 - [ ] Add explanation for building this module, using UHD scripts, creating a new block (where to find possible blocs, how to create the yaml desciption of the block and of the image), how to add IP's, ... => devlopping.md file
 - [ ] Add a description of the different blocks and their purpose, how to interact with them, how to use them, etc
 

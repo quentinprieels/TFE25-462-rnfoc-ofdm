@@ -12,25 +12,6 @@ This tool chain uses an [USRP-2944R](https://www.ni.com/fr-be/shop/model/usrp-29
 (also called [X310 + UBX(x2)](https://www.ettus.com/all-products/usrp-x310/) in the Ettus nominal).
 It embeds a Xilinx Kintex-7 FPGA (XC7K410T).
 
-## Table of contents
-
-- [Installation instructions for RFnOC toolchain](#installation-instructions-for-rfnoc-toolchain)
-  - [Table of contents](#table-of-contents)
-  - [Prerequisites](#prerequisites)
-  - [Install the UHD library](#install-the-uhd-library)
-    - [UHD Binary Installation](#uhd-binary-installation)
-    - [Cloning the UHD repository](#cloning-the-uhd-repository)
-    - [Verifying the UHD installation](#verifying-the-uhd-installation)
-  - [Install Vivado](#install-vivado)
-    - [Download and install](#download-and-install)
-    - [Troubleshooting](#troubleshooting)
-    - [Install the required patches](#install-the-required-patches)
-    - [Use external Vivado installation](#use-external-vivado-installation)
-    - [Test the Vivado installation](#test-the-vivado-installation)
-    - [Connect to a licensed server](#connect-to-a-licensed-server)
-  - [ModelSim](#modelsim)
-  - [GNU Radio](#gnu-radio)
-
 ## Prerequisites
 
 Before installing the required software, make sure you have the following prerequisites installed:
@@ -98,6 +79,8 @@ To do so, run the following command:
 ```bash
 git clone https://github.com/EttusResearch/uhd
 ```
+
+**Note**: In the following sections, the `<repo>` variable will refer to the path of the cloned UHD repository.
 
 ### Verifying the UHD installation
 
@@ -237,7 +220,7 @@ explains how to install and use ModelSim if you want to rely on it for simulatio
 
 **Note**: If your ModelSim installation is not recognized by the RFNoC tool chain, it may be due to the regular expression
 used by the provided scripts to determine the ModelSim version (see the *Prepare ModelSim environment*
-section in the `<uhd>/fpga/usrp3/tools/scripts/setupenv_base.sh` script).
+section in the `<repo>/fpga/usrp3/tools/scripts/setupenv_base.sh` script).
 
 ## GNU Radio
 
