@@ -9,7 +9,7 @@ Signal parameters:
   payload_mod: QPSK
   Nt: 3
   Nf: 1
-  Random seed: 42
+  random_seed: 42
   Signal filename: OFDM_frame_1024_128_5_3_BPSK_QPSK.txt
 
 Number of data samples to receive (N * (K + CP) * M) - nsamp: 17280

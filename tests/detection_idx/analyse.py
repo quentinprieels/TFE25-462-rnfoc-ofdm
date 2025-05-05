@@ -13,6 +13,11 @@ K = 1024
 CP = 128
 M = 5
 N = 3
+preamble_mod = "BPSK"
+payload_mod = "QPSK"
+Nt = 3
+Nf = 1
+random_seed = 42
 threshold = 300
 
 def get_last_sample_as_uint32(filename: str) -> tuple:
@@ -70,20 +75,21 @@ def plot_frame_with_indexes(ofdm_frame: ofdmFrame, detected_point: int, detectio
 detected_point_errors = []
 errors = {"FPGA index error": 0, "Transmitter error": 0, "Frame too short": 0, "No error": 0}
 errors_plot = {"FPGA index error": False, "Transmitter error": False, "Frame too short": False, "No error": False}
+bers = {}
 
 for filename in os.listdir("data"):
-    ofdm_signal = ofdmFrame(K=K, CP=CP, M=M, N=N, preamble_mod="BPSK", payload_mod="QPSK", Nt=3, Nf=1, random_seed=42)
-    ofdm_signal.load_tysmbol_bin("data/" + filename, type="sc16")
+    ofdm_frame = ofdmFrame(K=K, CP=CP, M=M, N=N, preamble_mod=preamble_mod, payload_mod=payload_mod, Nt=Nt, Nf=Nf, random_seed=random_seed)
+    ofdm_frame.load_tysmbol_bin("data/" + filename, type="sc16")
     
     # FPGA detected point
     detected_point, _, _ = get_last_sample_as_uint32("data/" + filename)
     
     # Remove measurements where detected point is not possible
-    if detected_point > ofdm_signal.frame_tlen:
+    if detected_point > ofdm_frame.frame_tlen:
         errors["FPGA index error"] += 1
         if errors_plot["FPGA index error"] == False:
             errors_plot["FPGA index error"] = True
-            plot_frame_with_indexes(ofdm_signal, detected_point, 0)
+            plot_frame_with_indexes(ofdm_frame, detected_point, 0)
             plt.savefig("FPGA_index_error.pdf")
             plt.close()
         continue
@@ -91,17 +97,17 @@ for filename in os.listdir("data"):
     detected_point += (K // 2) * M # compensate the L * M delay in hardware
     
     # Simulated detected point
-    if len(ofdm_signal.tsymbols_rx) < ofdm_signal.frame_tlen:
+    if len(ofdm_frame.tsymbols_rx) < ofdm_frame.frame_tlen:
         errors["Frame too short"] += 1
         if errors_plot["Frame too short"] == False:
             errors_plot["Frame too short"] = True
-            plot_frame_with_indexes(ofdm_signal, detected_point, 0)
+            plot_frame_with_indexes(ofdm_frame, detected_point, 0)
             plt.savefig("Frame_too_short.pdf")
             plt.close()
         continue
     
-    _, _, M_schmidl = metric_schmidl(ofdm_signal)
-    N_schmidl = moving_sum(M_schmidl, ofdm_signal.CP * ofdm_signal.M)
+    _, _, M_schmidl = metric_schmidl(ofdm_frame)
+    N_schmidl = moving_sum(M_schmidl, ofdm_frame.CP * ofdm_frame.M)
     detection_idx_schmidl = find_max_idx(N_schmidl, threshold=threshold)
     
     # Remove measurements where the transmitter has failed to send a complete frame
@@ -111,7 +117,7 @@ for filename in os.listdir("data"):
         errors["Transmitter error"] += 1
         if errors_plot["Transmitter error"] == False:
             errors_plot["Transmitter error"] = True
-            plot_frame_with_indexes(ofdm_signal, detected_point, detection_idx_schmidl, metric=N_schmidl)
+            plot_frame_with_indexes(ofdm_frame, detected_point, detection_idx_schmidl, metric=N_schmidl)
             plt.savefig("Transmitter_error.pdf")
             plt.close()
         continue
@@ -122,17 +128,38 @@ for filename in os.listdir("data"):
     errors["No error"] += 1
     if errors_plot["No error"] == False:
         errors_plot["No error"] = True
-        plot_frame_with_indexes(ofdm_signal, detected_point, detection_idx_schmidl, metric=N_schmidl)
+        plot_frame_with_indexes(ofdm_frame, detected_point, detection_idx_schmidl, metric=N_schmidl)
         plt.savefig("No_error.pdf")
         plt.close()
-
+        
+    # Compute the BER
+    start_forwaring = detected_point + (CP // 2) * M
+    ofdm_frame.tsymbols_rx = ofdm_frame.tsymbols_rx[start_forwaring:]
+    ofdm_frame.demodulate_frame(remove_first_symbol=False)
+    ofdm_frame.equalize()
+    ber = ofdm_frame.compute_ber()
+    if detected_point_error not in bers:
+        bers[detected_point_error] = []
+    bers[detected_point_error].append(ber)
+    
 # Print and save error statistics
 errors_df = pd.DataFrame.from_dict(errors, orient='index', columns=['Count'])
+errors_df.index.name = 'Error Type'
 errors_df['Percentage'] = (errors_df['Count'] / len(os.listdir('data'))) * 100
 errors_df = errors_df.sort_values(by='Count', ascending=False)
-errors_df.to_csv("errors.csv", index=True)
+errors_df.to_csv("errors.csv")
 print(errors_df)
     
+# Print and save BER statistics
+bers_df = pd.DataFrame.from_dict(bers, orient='index')
+bers_df['Mean BER'] = bers_df.index.map(lambda x: np.mean(bers[x]))
+bers_df['Count'] = bers_df.index.map(lambda x: len(bers[x]))
+bers_df['Count zero'] = bers_df.index.map(lambda x: len([ber for ber in bers[x] if ber == 0]))
+bers_df = bers_df.sort_index()
+bers_df = bers_df.rename_axis("Detected Point Error (samples)").reset_index()
+bers_df.to_csv("bers.csv", index=False)
+print(bers_df)
+
 # Plot the histogram of the detected point error
 plt.figure(figsize=(10, 6))
 # plt.title("Histogram of Detected Point Error", fontsize=14, fontweight='bold')
