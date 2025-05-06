@@ -15,7 +15,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <uhd/utils/thread_priority.hpp>
+#include <uhd/utils/thread.hpp>
 #include <uhd/utils/safe_main.hpp>
 #include <uhd/utils/static.hpp>
 #include <uhd/usrp/multi_usrp.hpp>
@@ -157,7 +157,7 @@ int UHD_SAFE_MAIN(int argc, char *argv[]){
     }
 //
 
-    boost::this_thread::sleep(boost::posix_time::seconds(1)); //allow for some setup time
+    std::this_thread::sleep_for(std::chrono::seconds(1)); //wait for the settings to take effect
 
     //create a transmit streamer linearly map channels (index0 = channel0, index1 = channel1, ...)
     
@@ -187,14 +187,14 @@ int UHD_SAFE_MAIN(int argc, char *argv[]){
             usrp->set_time_now(uhd::time_spec_t(0.0), 0);
 
             //sleep a bit while the slave locks its time to the master
-            boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
         else
         {
             if (pps == "internal" or pps == "external" or pps == "gpsdo")
                 usrp->set_time_source(pps);
             usrp->set_time_unknown_pps(uhd::time_spec_t(0.0));
-            boost::this_thread::sleep(boost::posix_time::seconds(1)); //wait for pps sync pulse
+            std::this_thread::sleep_for(std::chrono::seconds(1)); //wait for pps sync pulse
         }
     }
     else
