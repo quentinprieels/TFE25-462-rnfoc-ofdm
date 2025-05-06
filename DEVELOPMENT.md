@@ -1,8 +1,7 @@
 # Developing and Out-Of-Tree Module in RFNoC
 
-- RFNoC specification
-- Gain example
-- refers to building.md file for running a simulation and flashing the FPGA
+Refers to the [building.md](BUILDING.md) document for more information on how to build the FPGA image,
+run the testbench, and load the FPGA image on the USRP device.
 
 ## Create a new OOT module
 
@@ -94,6 +93,21 @@ The YAML file inside the `icore` directory contains the description of the FPGA 
 You can specify the different blocks that should be added, static connection between them, and the transport adapters that should be used.
 Please refer to the [RFNoC specification](https://files.ettus.com/app_notes/RFNoC_Specification.pdf) for more information on how to
 create a YAML file for the image core, and the RFNoC architecture.
+
+## Creating an UHD application
+
+The `apps` folder contains the file for the UHD application: a program to communicate with the USRP device, configure your block
+from the host, and send/receive data.
+
+### Implementing your block driver
+
+Before writing an UHD application, you need to implement the driver for your block. For example, if some registers need to be
+configured, you need to define those functions in the `include/rfnoc/<module_name>/<block_name>_control.hpp` file. You can
+then implement them in the `lib/<block_name>_control.cpp` file. Make sure to build and install the project after modifying
+the driver.
+
+You can then use those functions in your UHD application to configure the block. The UHD application can be written in C++ or Python.
+(For the Python API, you need to also implement the Python bindings for your block in the `python` folder.)
 
 ## References
 
