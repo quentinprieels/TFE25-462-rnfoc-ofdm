@@ -106,6 +106,8 @@ configured, you need to define those functions in the `include/rfnoc/<module_nam
 then implement them in the `lib/<block_name>_control.cpp` file. Make sure to build and install the project after modifying
 the driver.
 
+### Writing the UHD application
+
 You can then use those functions in your UHD application to configure the block. The UHD application can be written in C++ or Python.
 (For the Python API, you need to also implement the Python bindings for your block in the `python` folder.)
 
