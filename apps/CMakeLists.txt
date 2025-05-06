@@ -36,11 +36,26 @@ target_link_libraries(rx_to_file
    rfnoc-ofdm
 )
 
+# tx_waveform_radar.cpp
+add_executable(tx_waveform_radar
+   tx_waveform_radar.cpp
+)
+target_include_directories(
+   tx_waveform_radar
+   PRIVATE ${CMAKE_SOURCE_DIR}/include
+)
+target_link_libraries(tx_waveform_radar
+   ${UHD_LIBRARIES}
+   ${Boost_LIBRARIES}
+   -Wl,--no-as-needed
+   rfnoc-ofdm
+)
+
 
 #### Once it's built... ########################################################
 ## Typically you would install the apps into $PATH, which is what we do here.
 install(
-   TARGETS rx_to_file
+   TARGETS rx_to_file tx_waveform_radar
    RUNTIME
    DESTINATION ${RUNTIME_DIR}
    COMPONENT apps
