@@ -1,13 +1,10 @@
-# Installation instructions for RFnOC toolchain
+# Installation instructions for RFNoC toolchain
 
 This document provides instructions for *installing* the required software and
 dependencies needed to develop, build, install, and run the RFNoC OFDM module.
 More detailed instructions about the build process can be found in the
 [building.md](BUILDING.md) file.
 
-The tool chain is inspired by the one [proposed by Ettus](https://files.ettus.com/manual/md_usrp3_build_instructions.html)
-to program their USRP devices.
-It is part of the [USRP Hardware Driver and USRP Manual (UHD)](https://files.ettus.com/manual/index.html).
 This tool chain uses an [USRP-2944R](https://www.ni.com/fr-be/shop/model/usrp-2944.html) device
 (also called [X310 + UBX(x2)](https://www.ettus.com/all-products/usrp-x310/) in the Ettus nominal).
 It embeds a Xilinx Kintex-7 FPGA (XC7K410T).
@@ -67,9 +64,6 @@ uhd-host
 
 Note that the version of the UHD library may vary.
 
-See <https://files.ettus.com/manual/page_install.html#install_linux> for more details about UHD
-binary installation.
-
 ### Cloning the UHD repository
 
 You should also clone the [UHD repository](https://github.com/EttusResearch/uhd),
@@ -80,7 +74,9 @@ To do so, run the following command:
 git clone https://github.com/EttusResearch/uhd
 ```
 
-**Note**: In the following sections, the `<repo>` variable will refer to the path of the cloned UHD repository.
+**Note 1**: In the following sections, the `<repo>` variable will refer to the path of the cloned UHD repository.
+
+**Note 2**: During the development of this project, the used UHD version was `4.8.0`.
 
 ### Verifying the UHD installation
 
@@ -238,3 +234,9 @@ To install GNU Radio, you can follow the instructions provided in the
 (at least not on the Ubuntu 22.04 LTS version used in this work, in May 2025). Older versions of
 GNU Radio use a lower version of the `libuhd` package, making them incompatible with recent builds
 of FPGA images. This is the reason why C++ applications using UHD 4.8 where used in this work.
+
+## References
+
+- [USRP Hardware Driver and USRP Manual (UHD)](https://files.ettus.com/manual/index.html)
+  - [Binary installation](https://files.ettus.com/manual/page_install.html#install_linux)
+  - [Generation 3 USRP Build Documentation](https://files.ettus.com/manual/md_usrp3_build_instructions.html)

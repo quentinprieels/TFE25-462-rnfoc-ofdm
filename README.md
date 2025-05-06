@@ -3,12 +3,17 @@
 This RFNoC out-of-tree module provides an OFDM block for use in RFNoC flowgraphs.
 Its main purpose is to provide a partial implementation of an OFDM receiver.
 
+**Important note**: The different guides in this repository contains some commands
+and installation instructions. Some of them may need to be adapted to your
+environment/distribution/software version. You should *never* run a command
+without understanding what it does.
+
 ## RFNoC
 
 RFNoC is a heterogeneous processing framework that can be used to implement high
 throughput DSP in the FPGA, for Software Defined Radio (SDR) systems, in an
 easy-to-use and flexible way. RFNoC and GNU Radio can be used to implement
-heterogenous DSP systems that can span CPU-based hosts, embedded systems and FPGAs.
+heterogenous DSP systems that can span CPU-based hosts, embedded systems and FPGA's.
 
 RFNoC can be used to implement DSP “flow-graphs” where DSP algorithms and IP blocks
 are represented as nodes in the graph and the data-flow between them as edges.
@@ -17,7 +22,7 @@ with the nodes and edges of the graph and provides seamless and consistent
 interfaces to implement IP in the FPGA and software.
 
 See the RFNoC specification for more details on the architecture and how to use it:
-https://files.ettus.com/app_notes/RFNoC_Specification.pdf
+<https://files.ettus.com/app_notes/RFNoC_Specification.pdf>.
 
 ## Directory Structure (in alphabetical order)
 
@@ -33,7 +38,7 @@ EttusResearch recommends sticking to this directory structure and file layout.
 
 * `examples`: Any example that shows how to use this OOT module goes here.
   Examples that are listed in CMake get installed into `share/rfnoc-ofdm/examples`
-  within the installation prefix. The `ofdmlib`example folder contains an 
+  within the installation prefix. The `ofdmlib`example folder contains an
   example Python script that shows how the [ofdm_frame](python/rfnoc_ofdm/ofdm_frame.py)
   class can be used to modulate, demodulate and simulate OFDM signals.
 
@@ -41,9 +46,9 @@ EttusResearch recommends sticking to this directory structure and file layout.
   of the individual RFNoC blocks, along with their testbenches, and additional
   modules required to build the blocks. There is one subdirectory for every
   block (or module, or transport adapter). This is also where to define IP that
-  is required to build the modules (e.g., Vivado-generated IP).
+  is required to build the modules (e.g., Vivado generated IP).
   Note that this is an "include directory" for gateware, which is why the
-  module name ('ofdm') is included in the path. When installing this OOT
+  module name (*'ofdm'*) is included in the path. When installing this OOT
   module, these files get copied to the installation path's RFNoC package dir
   (e.g., `/usr/share/uhd/rfnoc/fpga/ofdm`) so the image builder can find
   all the source files when compiling bitfiles that use multiple OOT modules.
@@ -78,9 +83,10 @@ EttusResearch recommends sticking to this directory structure and file layout.
   the RFNoC block, you can use the C++ API, defined in the `lib` directory.
   This directory also contains the Python library that is used by the `apps` to
   generate and process OFDM signals. The `rfnoc_ofdm` subdirectory contains:
-  - `ofdm_frame.py`: the `ofdmFrame` class, which is used to represent OFDM frames.
-  - `plotting.py`: helpers for plots and visualizations.
-  - `utils.py`: helpers for the `ofdmFrame` class.
+  
+  * `ofdm_frame.py`: the `ofdmFrame` class, which is used to represent OFDM frames.
+  * `plotting.py`: helpers for plots and visualizations.
+  * `utils.py`: helpers for the `ofdmFrame` class.
 
 * `rfnoc`: This directory contains all the block definitions (YAML files).
   These block definitions can be read by the RFNoC tools, and will get
@@ -93,13 +99,14 @@ EttusResearch recommends sticking to this directory structure and file layout.
   directory, e.g., `/usr/share/uhd/rfnoc/blocks/*.yml`.
 
 * `sim`: This directory contains the simulation files for the RFNoC blocks or
-  the Schmidl&Cox algorithm. It is not part of the default structure of a
+  the Schmid l &Cox algorithm. It is not part of the default structure of a
   RFNoC OOT module. It contains 2 subdirectories:
-  - `bus_sizes`: An comparison between clipping and truncating buses to
+  
+  * `bus_sizes`: An comparison between clipping and truncating buses to
      reduce their size. The goal is to use the technique that deforms the
      least the signal.
-  - `schmidl_cox`: Simulation of different synchronization algorithms, based
-    on the Schmidl&Cox algorithm.
+  * `schmidl_cox`: Simulation of different synchronization algorithms, based
+    on the Schmidl & Cox algorithm.
 
 * `tests`: This directory contains files used by the block testbenches
   It is used to store tests results of real communication made by USRP's.
@@ -128,6 +135,7 @@ To build and install this module, follow these steps:
     make
     sudo make install
     ```
+
     Replace `<repo>` with the path to the [UHD repository](https://github.com/EttusResearch/uhd).
 
 The `make help` command will show you all available build targets for installing, testing and generating the image core bitfiles.

@@ -1,11 +1,10 @@
 # Building an RFNoC Out-of-Tree Module (OOT)
 
-Some information and instructions provided in this document where taken from the
-[Knowledge base of Ettus Research](https://kb.ettus.com/), and especially from the
-[Getting Started with RFNoC in UHD 4.0](https://kb.ettus.com/Getting_Started_with_RFNoC_in_UHD_4.0) page.
-
 Before you start, make sure you have installed the necessary software and configured your environment
 for RFNoC development. You can find the instructions for this in the [installation.md](INSTALLATION.md) document.
+
+If you want to continue working with this module, or develop your own RFNoC OOT module, check the
+[development.md](DEVELOPMENT.md) document. It contains some useful tips and tricks about developing RFNoC OOT modules.
 
 ## Building and installing the RFNoC OOT module
 
@@ -36,7 +35,17 @@ After building the project, you can install it by running:
 make install
 ```
 
-**Note**: `sudo` may be required to install the project, depending on your system configuration.
+**Note 1**: `sudo` may be required to install the project, depending on your system configuration.
+
+**Note 2**: Check the output of the `make install` command to review the different installation paths.
+It may be needed (as it is the case for Python scripts using the `rfnoc_ofdm` library) to add the
+`/usr/local/lib/python3.10/site-packages` path to the `PYTHONPATH` environment variable. Inside a python
+script, you can do this by adding the following lines at the beginning of the script:
+
+```python
+import sys
+sys.path.append('/usr/local/lib/python3.10/site-packages')
+```
 
 ## Load a custom FPGA image
 
@@ -74,3 +83,8 @@ uhd_usrp_probe --args "type=x300,addr=<ip_address>"
 
 You may ignore the `--args` option if you are using a single USRP device connected
 to your host machine.
+
+## References
+
+- [EttusResearch Knowledge Base](https://kb.ettus.com/)
+- [Getting Started with RFNoC in UHD 4.0](https://kb.ettus.com/Getting_Started_with_RFNoC_in_UHD_4.0)
