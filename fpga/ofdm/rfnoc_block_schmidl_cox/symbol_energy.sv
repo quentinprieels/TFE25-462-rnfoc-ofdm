@@ -1,3 +1,11 @@
+//
+// Symbol energy computation block
+//
+// This module computes the R(d) metric in the Schmidl-Cox algorithm.
+// It takes the input signal and computes the energy on half the FFT size
+// of the signal.
+//
+
 module symbol_energy #(
     parameter integer FFT_SIZE = 1024
 )(

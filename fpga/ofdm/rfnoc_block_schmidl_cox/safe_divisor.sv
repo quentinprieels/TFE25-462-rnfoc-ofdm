@@ -1,3 +1,10 @@
+//
+// Safe Divisor Module
+//
+// This module implements a safe divisor for AXI Stream data.
+// It ensures that the divisor is not zero before performing the division.
+// 
+
 module safe_divisor #(
     parameter WIDTH = 32
 ) (

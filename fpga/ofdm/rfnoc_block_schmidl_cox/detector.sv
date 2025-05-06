@@ -1,3 +1,14 @@
+//
+// Detector
+//
+// This module implement the detection finite state machine (FSM)
+// to detect the start of an OFDM frame.
+// Depending on the output_select signal, it can output
+// the detected signal with zeros in the preamble, the payload signal only,
+// the entire signal with the last sample modified, or the metric LSB.
+// The module also handles the packet length and the end of the OFDM packet.
+//
+
 module detector #(
   parameter int HALF_FFT_SIZE = 512,
   parameter int HALPH_CP_SIZE = 64,
@@ -11,7 +22,7 @@ module detector #(
   // Configuration inputs
   input [31:0] threshold,     // Threshold for detection
   input [31:0] packet_length, // Length of the packet
-  input [1:0]  output_select, // Output select signal (00: signal, 10: metric MSB, 11: metric LSB)
+  input [1:0]  output_select, // Output select signal (00: signal with zeros in preamble, 01, payload signal only, 10: all the signal with modified last sample, 11: metric LSB)
 
   // Metric input
   input [M_TDATA_WIDTH-1:0] m_tdata, 

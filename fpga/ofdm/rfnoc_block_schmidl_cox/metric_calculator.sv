@@ -1,29 +1,13 @@
-// +-------------------------------------------------------------------------+
-// | Metric calculator for the Schmidl-Cox synchronization algorithm         |
-// +-------------------------------------------------------------------------+
-// | 1) METRIC CALCULATION
-// | This module calculates the final metric used for detection in the       |
-// | Schmidl-Cox synchronization algorithm.                                  |
-// |                                                                         |
-// | The delay path P(d) is calculating the half-OFDM symbol correlation     |
-// | metric: P(d + 1) = P(d)                                                 |
-// |                  + I(d - HALF_FFT_SIZE)* x I(d)                         |
-// |                  - I(d - FFT_SIZE)* x I(d - HALF_FFT_SIZE)              |
-// |                                                                         |
-// | The energy path R(d) is calculating the half-OFDM symbol energy metric: |
-// | R(d + 1) = R(d)                                                         |
-// |          + |I(d)|^2                                                     |
-// |          - |I(d - HALF_FFT_SIZE)|^2                                     |
-// |                                                                         |
-// | The metic M(d) is calculated as: M(d) = |P(d)|^2 / (R(d))^2             |
-// |                                                                         |
-// | The metric is then passed into a moving sum (to average its values)     |
-// | over a window of size CP: N = SUM(M(d), CP)                             |
-// |                                                                         |
-// | 2) DETECTION                                                            |
-// | this module instantiates a detection module that uses the metric M(d)   |
-// | to detect the start of the OFDM symbol.                                 |
-// +-------------------------------------------------------------------------+
+//
+// Metric calculator for Schmidl-Cox algorithm
+//
+// This module computes the Schmidl-Cox metric for OFDM synchronization
+// It takes the input signal and computes the metric 
+// N(d) = moving_sum(M(d)), where M(d) = |P(d)|^2 / (R(d))^2
+//
+// It also outputs the delayed input signal y(d-L) for further processing,
+// synchonized with the metric output.
+//
 
 module metric_calculator #(
     parameter int FFT_SIZE = 1024,
