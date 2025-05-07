@@ -24,7 +24,7 @@ def plot_schmidl_cox(ofdm_frame: ofdmFrame, metric: tuple[np.ndarray, str], thre
     cp_copied_preamble_end = (ofdm_frame.CP + ofdm_frame.K) * ofdm_frame.M
     plt.text(cp_copied_preamble_start + (cp_copied_preamble_end - cp_copied_preamble_start) // 2, 0.93 * text_annotation_height, "CP cpy", horizontalalignment='center', clip_on=True, color=colors["CP"])
     plt.annotate("", xy=(cp_copied_preamble_end, line2_annotation_height), xytext=(cp_copied_preamble_start, line2_annotation_height), arrowprops=dict(arrowstyle="<->", color=colors["CP"]), clip_on=True)
-    plt.vlines(x=cp_copied_preamble_start, ymax=line_annotation_height, linestyles='-.', color=colors["CP"], ymin=0)
+    plt.vlines(x=cp_copied_preamble_start, ymax=line_annotation_height, linestyles=':', color=colors["CP"], ymin=0)
 
     # Title and subtitle
     title = "Schmidl and Cox Synchronization Algorithm"    
@@ -50,7 +50,7 @@ def plot_schmidl_cox(ofdm_frame: ofdmFrame, metric: tuple[np.ndarray, str], thre
     if info is not None:
         plt.plot(info[0], color=colors['metric'], label=info[1], linestyle='--')
         
-    plt.axhline(y=threshold, color=colors['threshold'], linestyle=':', label="Threshold")
+    plt.axhline(y=threshold, color=colors['threshold'], linestyle='-.', label="Threshold")
     
     if sync_idx is not None:
         plt.axvline(x=sync_idx, color=colors['sync'], linestyle='-.', label="Sync index")

@@ -38,7 +38,7 @@ EttusResearch recommends sticking to this directory structure and file layout.
 
 * `examples`: Any example that shows how to use this OOT module goes here.
   Examples that are listed in CMake get installed into `share/rfnoc-ofdm/examples`
-  within the installation prefix. The `ofdmlib`example folder contains an
+  within the installation prefix. The `python`example folder contains an
   example Python script that shows how the [ofdm_frame](python/rfnoc_ofdm/ofdm_frame.py)
   class can be used to modulate, demodulate and simulate OFDM signals.
 

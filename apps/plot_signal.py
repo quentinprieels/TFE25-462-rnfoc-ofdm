@@ -72,7 +72,7 @@ def plot_received_signal(rx_sig: np.ndarray) -> None:
         axs[0].axvline(x=detected_point, color=colors["sync"], linestyle='--', label='Detected Point')
         axs[0].axvline(x=start_forwaring, color=colors["CP"], linestyle='--', label='Start Forwarding')
 
-    axs[1].plot(np.real(rx_sig))
+    axs[1].plot(np.real(rx_sig), color=colors["signal"])
     axs[1].set_ylabel('Amplitude $\mathcal{R}{rx[n]}$')
     axs[1].set_title('Real Part')
     axs[1].grid(linestyle='--')
@@ -80,7 +80,7 @@ def plot_received_signal(rx_sig: np.ndarray) -> None:
         axs[1].axvline(x=detected_point, color=colors["sync"], linestyle='--', label='Detected Point')
         axs[1].axvline(x=start_forwaring, color=colors["CP"], linestyle='--', label='Start Forwarding')
 
-    axs[2].plot(np.imag(rx_sig))
+    axs[2].plot(np.imag(rx_sig), color=colors["signal"])
     axs[2].set_xlabel('Sample Index [n]')
     axs[2].set_ylabel('Amplitude $\mathcal{I}{rx[n]}$')
     axs[2].set_title('Imaginary Part')

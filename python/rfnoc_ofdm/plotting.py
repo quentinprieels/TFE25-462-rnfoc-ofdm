@@ -8,49 +8,47 @@ from scipy.special import erfc
 from .ofdm_frame import ofdmFrame
 
 # Color palette
-gray = "#9d9d9d"
-red = "#e02b32"
-yellow = "#f0c571"
-blue = "#3d5281"
-green = "#59a89c"
-purple = "#a559aa"
+blue_drak = "#00204e"
+blue_light = "#9cb7d4"
+blue_bright = "#5bd4e6"
+purple = "#8b687f"
+yellow = "#E9AE49"
+green = "#8EC87E"
+red = "#F16A6A"
 
 colors = {    
     # Colors
-    "gray": gray,
+    "blue_dark": blue_drak,
+    "blue_light": blue_light,
+    "blue_bright": blue_bright,
     "purple": purple,
-    "green": green,
     "yellow": yellow,
+    "green": green,
     "red": red,
-    "blue": blue,
     
     # Received signal
-    "preamble": green,
-    "pilot": purple,
-    "signal": gray,
+    "preamble": blue_drak,
+    "pilot": blue_bright,
+    "signal": blue_light,
     
     # Send vs received
     "send": purple,
-    "received": gray,
+    "received": blue_light,
     
     # Signal / metric
     "metric": red,
     "threshold": yellow,
-    "CP": purple,
-    "info": blue,
     "sync": green,
+    "CP": purple,
+    "info": blue_drak,
     
     # Mutliple lines
-    "line1": blue,
-    "line2": green,
-    "line3": purple,
+    "line1": blue_drak,
+    "line2": purple,
+    "line3": green,
     "line4": red,
     "line5": yellow,
-    "line6": gray,
-    
-    # Compatibility
-    "orange": "#FFB570",
-    "pink": "#B5739D",
+    "line6": blue_bright,
 }
 
 # Size
@@ -148,7 +146,7 @@ def plot_frame_waveform(ofdm_frame: ofdmFrame, use_rx: bool = False, view_title:
     normalized_frame = np.abs(ofdm_frame.tsymbols) / np.max(np.abs(ofdm_frame.tsymbols))
     if use_rx:
         normalized_frame = np.abs(ofdm_frame.tsymbols_rx) / np.max(np.abs(ofdm_frame.tsymbols_rx))
-    plt.plot(normalized_frame, label="OFDM frame", color=colors["signal"], alpha=0.4)  
+    plt.plot(normalized_frame, label="OFDM frame", color=colors["signal"], alpha=0.6)
     
     # Signal information (sto, cp, ...)
     preamble_start = 0
@@ -172,7 +170,7 @@ def plot_frame_waveform(ofdm_frame: ofdmFrame, use_rx: bool = False, view_title:
         cp_preamble_end = ofdm_frame.CP * ofdm_frame.M
         plt.text(cp_preamble_start + (cp_preamble_end - cp_preamble_start) // 2, 0.93 * text_annotation_height, "CP", horizontalalignment='center', clip_on=True, color=colors["CP"])
         plt.annotate("", xy=(cp_preamble_end, line2_annotation_height), xytext=(cp_preamble_start, line2_annotation_height), arrowprops=dict(arrowstyle="<->", color=colors["CP"]), clip_on=True)
-        plt.vlines(x=cp_preamble_end, ymax=line_annotation_height, linestyles='-.', color=colors["CP"], ymin=0)
+        plt.vlines(x=cp_preamble_end, ymax=line_annotation_height, linestyles=':', color=colors["CP"], ymin=0)
       
     if symbol_annoation:  
         for i in range(ofdm_frame.N):
