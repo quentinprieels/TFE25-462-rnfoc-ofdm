@@ -16,8 +16,8 @@ plt.savefig("frame_matrix.pdf", bbox_inches="tight")
 
 
 # Plot the frame waveform
-ofdm_frame = ofdmFrame(K=1024, CP=256, M=5, N=5, preamble_mod="BPSK", payload_mod="QPSK", Nt=4, Nf=1, random_seed=0)
-plot_frame_waveform(ofdm_frame, view_title=False)
+ofdm_frame = ofdmFrame(K=1024, CP=256, M=5, N=3, preamble_mod="BPSK", payload_mod="QPSK", Nt=3, Nf=1, random_seed=0)
+plot_frame_waveform(ofdm_frame, view_title=False, CP_payload=True)
 plt.savefig("frame_waveform.pdf", bbox_inches="tight")
 
 

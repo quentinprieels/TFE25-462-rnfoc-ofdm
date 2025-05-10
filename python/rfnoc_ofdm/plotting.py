@@ -136,7 +136,7 @@ def plot_frame_matrix(ofdm_frame: ofdmFrame, view_bits: bool = False, view_title
     plt.xlabel("\\text{Subcarriers (frequency)}")
     plt.tight_layout()
 
-def plot_frame_waveform(ofdm_frame: ofdmFrame, use_rx: bool = False, view_title: bool = True, params_for_title: dict = None, symbol_annoation: bool = True) -> None:
+def plot_frame_waveform(ofdm_frame: ofdmFrame, use_rx: bool = False, view_title: bool = True, params_for_title: dict = None, symbol_annoation: bool = True, CP_payload: bool = False) -> None:
     """
     Plot the time domain waveform of the OFDM frame.
     """
@@ -196,13 +196,23 @@ def plot_frame_waveform(ofdm_frame: ofdmFrame, use_rx: bool = False, view_title:
         plt.text(cp_preamble_start + (cp_preamble_end - cp_preamble_start) // 2, 0.93 * text_annotation_height, "CP", horizontalalignment='center', clip_on=True, color=colors["CP"])
         plt.annotate("", xy=(cp_preamble_end, line2_annotation_height), xytext=(cp_preamble_start, line2_annotation_height), arrowprops=dict(arrowstyle="<->", color=colors["CP"]), clip_on=True)
         plt.vlines(x=cp_preamble_end, ymax=line_annotation_height, linestyles=':', color=colors["CP"], ymin=0)
+        
+        if CP_payload:
+            for i in range(ofdm_frame.N):
+                cp_payload_start = payload_start + i * (ofdm_frame.CP + ofdm_frame.K) * ofdm_frame.M
+                cp_payload_end = cp_payload_start + ofdm_frame.CP * ofdm_frame.M
+                plt.text(cp_payload_start + (cp_payload_end - cp_payload_start) // 2, 0.93 * text_annotation_height, "CP", horizontalalignment='center', clip_on=True, color=colors["CP"])
+                plt.annotate("", xy=(cp_payload_end, line2_annotation_height), xytext=(cp_payload_start, line2_annotation_height), arrowprops=dict(arrowstyle="<->", color=colors["CP"]), clip_on=True)
+                plt.vlines(x=cp_payload_end, ymax=line_annotation_height, linestyles=':', color=colors["CP"], ymin=0)
       
     if symbol_annoation:  
         for i in range(ofdm_frame.N):
             symbol_start = payload_start + i * (ofdm_frame.CP + ofdm_frame.K) * ofdm_frame.M
             symbol_end = payload_start + (i + 1) * (ofdm_frame.CP + ofdm_frame.K) * ofdm_frame.M
-            plt.text(symbol_start + (symbol_end - symbol_start) // 2, 0.93 * text_annotation_height, f"Symbol {i}", horizontalalignment='center', clip_on=True, color=colors["info"])
+            plt.text(symbol_start + (symbol_end - symbol_start) // 2, 0.93 * text_annotation_height, f"Symbol {i + 1}", horizontalalignment='center', clip_on=True, color=colors["info"])
             plt.vlines(x=symbol_end, ymax=line_annotation_height, linestyle='--', color=colors["info"], ymin=0)
+            
+            
         
     if ofdm_frame.CP > 0:
         pass
