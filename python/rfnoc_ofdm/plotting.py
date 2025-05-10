@@ -7,6 +7,27 @@ from scipy.special import erfc
 
 from .ofdm_frame import ofdmFrame
 
+# Use latex for rendering
+def use_latex():
+    """
+    Use LaTeX for rendering.
+    """
+    plt.rcParams.update({
+        'text.usetex': True,
+        'font.family': 'serif',
+        'font.serif': ['Computer Modern'],
+        'font.size': 14,
+        'text.latex.preamble': r'\usepackage{amsmath} \usepackage{amssymb}',
+        'axes.labelsize': 14,
+        'axes.titlesize': 16,
+        'legend.fontsize': 14,
+        'xtick.labelsize': 12,
+        'ytick.labelsize': 12,
+        'axes.unicode_minus': False,
+        'savefig.format': 'pdf'
+    })
+
+
 # Color palette
 blue_drak = "#00204e"
 blue_light = "#9cb7d4"
@@ -58,7 +79,6 @@ long = (15, 5)
 
 # Set the default matplotlib parameters
 plt.rcParams['axes.prop_cycle'] = cycler(color=list(colors.values()))
-plt.rcParams['font.family'] = 'sans-serif'
 
 def plot_frame_matrix(ofdm_frame: ofdmFrame, view_bits: bool = False, view_title: bool = True) -> None:
     """
@@ -91,11 +111,11 @@ def plot_frame_matrix(ofdm_frame: ofdmFrame, view_bits: bool = False, view_title
     preamble_legend_idx = 2 - (2 / 3) / 2
     
     plt.figure("OFDM frame matrix", figsize=classical)
+    use_latex()
     
     if view_title:
-        plt.suptitle("OFDM frame matrix", fontsize=14, fontweight="bold")
-        plt.title(f"Parameters: K={ofdm_frame.K}, N={ofdm_frame.N}, Nt={ofdm_frame.Nt}, Nf={ofdm_frame.Nf}", fontsize=10, fontstyle="italic")
-    
+        plt.suptitle("\\textbf{OFDM frame matrix}", fontsize=14)
+        plt.title(r"\textit{Parameters: K=" + str(ofdm_frame.K) + r", N=" + str(ofdm_frame.N) + r", N_t=" + str(ofdm_frame.Nt) + r", N_f=" + str(ofdm_frame.Nf) + r"}")    
     sns.heatmap(matrix,
                 cmap=sns.color_palette([colors["signal"], colors["pilot"], colors["preamble"]]),
                 cbar_kws={"ticks": [0, 1, 2], "format": "%d"},
@@ -105,11 +125,15 @@ def plot_frame_matrix(ofdm_frame: ofdmFrame, view_bits: bool = False, view_title
                 annot=binary_matrix if view_bits else None,
                 fmt="",
                 annot_kws={"color": "black"})
+    
+    # Increase font size for x and y ticks
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
     colorbar = plt.gca().collections[0].colorbar
     colorbar.set_ticks([data_legend_idx, pilot_legend_idx, preamble_legend_idx])
-    colorbar.set_ticklabels(["Data", "Pilots", "Preamble"])
-    plt.ylabel("OFDM symbols (time)")
-    plt.xlabel("Subcarriers (frequency)")
+    colorbar.set_ticklabels(["\\text{Data}", "\\text{Pilots}", "\\text{Preamble}"], fontsize=14)
+    plt.ylabel("\\text{OFDM symbols (time)}")
+    plt.xlabel("\\text{Subcarriers (frequency)}")
     plt.tight_layout()
 
 def plot_frame_waveform(ofdm_frame: ofdmFrame, use_rx: bool = False, view_title: bool = True, params_for_title: dict = None, symbol_annoation: bool = True) -> None:
@@ -117,6 +141,7 @@ def plot_frame_waveform(ofdm_frame: ofdmFrame, use_rx: bool = False, view_title:
     Plot the time domain waveform of the OFDM frame.
     """
     plt.figure("OFDM Frame", figsize=long)
+    use_latex()
         
     # Title and subtitle
     title = "OFDM Frame"
@@ -183,7 +208,7 @@ def plot_frame_waveform(ofdm_frame: ofdmFrame, use_rx: bool = False, view_title:
         pass
         
     plt.xlabel("Samples [n]")
-    plt.ylabel("Amplitude |x[n]| (normalized)")
+    plt.ylabel("Amplitude $|x[n]|$ (normalized)")
     plt.ylim(0, 1.2)
     plt.xlim(0, len(normalized_frame))
     plt.grid(linestyle='--')  
@@ -200,11 +225,13 @@ def plot_constellation(ofdm_frame: ofdmFrame, view_title: bool = False) -> None:
     subtitle = f"Parameters: {' - '.join(sorted([f'{k}: {v}' for k, v in subtitle_params_values.items()]))}"
     
     plt.figure(title, figsize=square)
+    use_latex()
     if view_title:
         plt.suptitle(title, fontsize=14, fontweight="bold")
         plt.title(subtitle, fontsize=10, fontstyle="italic")
     plt.scatter(np.real(ofdm_frame.fsymbols_payload_rx), np.imag(ofdm_frame.fsymbols_payload_rx), label="Recieved", c=colors["received"], marker="o")
     plt.scatter(np.real(ofdm_frame.fsymbols_payload), np.imag(ofdm_frame.fsymbols_payload), label="Sent", c=colors["send"], marker="x")
+    plt.xlabel("Real")
     plt.ylabel("Imaginary")
     plt.xlim(-2, 2)
     plt.ylim(-2, 2)
@@ -228,6 +255,7 @@ def plot_ber_vs_snr(ber_results: pd.DataFrame, view_title: bool = True, params: 
     
     title = "BER vs SNR"
     plt.figure(title, figsize=classical)
+    use_latex()
     if view_title:
         plt.suptitle(title, fontsize=14, fontweight="bold")
         if params is not None:
