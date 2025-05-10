@@ -10,8 +10,8 @@ from rfnoc_ofdm.plotting import plot_frame_matrix, plot_frame_waveform, plot_con
 
 
 # Plot the frame matrix
-ofdm_frame = ofdmFrame(K=32, CP=8, M=5, N=25, preamble_mod="BPSK", payload_mod="QPSK", Nt=4, Nf=1, random_seed=0)
-plot_frame_matrix(ofdm_frame, view_bits=True, view_title=False)
+ofdm_frame = ofdmFrame(K=16, CP=4, M=5, N=16, preamble_mod="BPSK", payload_mod="QPSK", Nt=4, Nf=1, random_seed=0)
+plot_frame_matrix(ofdm_frame, view_bits=False, view_title=False)
 plt.savefig("frame_matrix.pdf", bbox_inches="tight")
 
 
