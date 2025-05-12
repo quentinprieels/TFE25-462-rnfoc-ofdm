@@ -137,6 +137,7 @@ for filename in os.listdir("data"):
     start_forwaring = detected_point + (CP // 2) * M
     ofdm_frame.tsymbols_rx = ofdm_frame.tsymbols_rx[start_forwaring:]
     ofdm_frame.demodulate_frame(remove_first_symbol=False)
+    ofdm_frame.estimate_channel()
     ofdm_frame.equalize()
     ber = ofdm_frame.compute_ber()
     if detected_point_error not in bers:

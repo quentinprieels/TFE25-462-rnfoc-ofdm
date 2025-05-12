@@ -28,6 +28,7 @@ for filename in os.listdir(folder):
     ofdm_frame = ofdmFrame(K=K, CP=CP, M=M, N=N, preamble_mod=preamble_mod, payload_mod=payload_mod, Nt=Nt, Nf=Nf, random_seed=random_seed)
     ofdm_frame.load_tysmbol_bin(folder + "/" + filename)
     ofdm_frame.demodulate_frame()
+    ofdm_frame.estimate_channel()
     ofdm_frame.equalize()
     ber = ofdm_frame.compute_ber()
     bers[filename] = ber
@@ -62,6 +63,7 @@ for filename in os.listdir(folder):
     ofdm_frame = ofdmFrame(K=K, CP=CP, M=M, N=N, preamble_mod=preamble_mod, payload_mod=payload_mod, Nt=Nt, Nf=Nf, random_seed=random_seed)
     ofdm_frame.load_tysmbol_bin(folder + "/" + filename)
     ofdm_frame.demodulate_frame()
+    ofdm_frame.estimate_channel()
     ofdm_frame.equalize()
     ber = ofdm_frame.compute_ber()
     bers[filename] = ber

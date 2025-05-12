@@ -314,10 +314,7 @@ class ofdmFrame:
         """
         Equalize the received symbols.
         This function estimates the channel and equalizes the received symbols.
-        """
-        # Estimate the channel
-        self.estimate_channel()
-        
+        """        
         # Equalize the received symbols
         self.fsymbols_payload_rx = self.fsymbols_payload_rx / self.H_interp
     
