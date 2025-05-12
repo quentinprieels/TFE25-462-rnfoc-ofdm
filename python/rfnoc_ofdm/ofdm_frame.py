@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.interpolate import RegularGridInterpolator
+from scipy.signal import correlate as scipy_correlate
 
 from .utils import symbol_mapping, inverse_mapping, InputError
 
@@ -493,3 +494,27 @@ class ofdmFrame:
         rx_sig = np.convolve(self.tsymbols_rx, h)
         rx_sig = rx_sig[:self.frame_tlen]
         self.tsymbols_rx = rx_sig
+
+
+    ################################################################################################################
+    # Helper function for timing synchronization without Schmidl & Cox (comparison with previous setup generation) #
+    ################################################################################################################
+    def get_frame_synchronization_idx(self) -> int:
+        """
+        Get the frame synchronization index.
+        This function is used to find the start of the frame in the received signal.
+        The preamble is used to find the start of the frame.
+        """
+        tsymbols_preamble = self.modulate_symbols(self.fsymbols_preamble)
+        pulse_corr = scipy_correlate(self.tsymbols_rx, tsymbols_preamble, mode='full')[self.preamble_tlen-1:len(self.tsymbols_rx)+self.preamble_tlen-1]
+        max_idx = np.argmax(abs(pulse_corr))
+        
+        # Check if it is a valid index
+        frame_len = len(self.tsymbols_rx)
+        if frame_len - max_idx < self.frame_tlen:
+
+            # Take the second maximum index
+            max_idx = np.argsort(abs(pulse_corr))[-2]
+            print(f"CAUTION: The frame length is too short, the second maximum index is used: {max_idx}")
+        
+        return max_idx
