@@ -102,6 +102,7 @@ class ofdmFrame:
         self.CP_rx = None # True if the cyclic prefix is still present in the received symbols
         self.fsymbols_payload_rx = None # Placeholder for the received frequency domain symbols
         self.H_interp = None # Placeholder for the channel estimation
+        self.range_doppler_map = None # Placeholder for the range Doppler map
     
 
     ############################
@@ -343,7 +344,24 @@ class ofdmFrame:
         ber = n_errors / n_total_bits
         return ber
 
-
+    def delay_doppler(self, zeropad_P: int = 1, zeropad_N: int = 1) -> np.ndarray:
+        """
+        Compute the range and Doppler shift based on the channel estimation.
+        
+        Parameters:
+        - zeropad_P: Zero padding the range shift
+        - zeropad_N: Zero padding for the Doppler shift
+        """
+        channel_estimated = self.H_interp
+        n_fft = self.N * zeropad_P
+        n_ifft = self.K * zeropad_N #* self.M
+        size = self.K * zeropad_N #* self.M
+        
+        range_doppler_map = np.fft.ifftshift(np.fft.ifft(np.fft.fft(channel_estimated, axis=0, n=n_fft), axis=1, n=n_ifft)[:,:size], axes=0)
+        # range_doppler_map = np.fft.ifft(np.fft.fft(channel_estimated, axis=0, n=n_fft), axis=1, n=n_ifft) #[:,:size]
+        self.range_doppler_map = range_doppler_map
+    
+    
     #################################
     # Save/load signal to/from file #
     #################################

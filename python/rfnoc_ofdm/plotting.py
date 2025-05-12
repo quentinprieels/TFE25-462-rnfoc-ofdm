@@ -212,8 +212,6 @@ def plot_frame_waveform(ofdm_frame: ofdmFrame, use_rx: bool = False, view_title:
             plt.text(symbol_start + (symbol_end - symbol_start) // 2, 0.93 * text_annotation_height, f"Symbol {i + 1}", horizontalalignment='center', clip_on=True, color=colors["info"])
             plt.vlines(x=symbol_end, ymax=line_annotation_height, linestyle='--', color=colors["info"], ymin=0)
             
-            
-        
     if ofdm_frame.CP > 0:
         pass
         
@@ -328,4 +326,44 @@ def plot_ber_vs_snr(ber_results: pd.DataFrame, view_title: bool = True, params: 
     plt.ylim(bottom=10**(-6))
     plt.legend(loc='lower right')
     plt.grid(True, which='both', linestyle='--')
+    plt.tight_layout()
+    
+    
+def plot_range_doppler_map(ofdm_frame: ofdmFrame, zeropad_P: int = 1, zeropad_N: int = 1, bandwidth: float = 40e6, view_title: bool = True) -> None:
+    """
+    Plot the range-doppler map.    
+    """
+    df = bandwidth / ofdm_frame.K   # subcarrier spacing
+    t = 1 / df                      # symbol duration
+    tc = 1 / bandwidth              # time between two samples without oversampling
+    t_cp = ofdm_frame.CP * tc       # cyclic prefix duration
+    t_frame = t + t_cp              # frame duration
+    
+    # Grid spacing
+    dtau = 1 / bandwidth / ofdm_frame.M / zeropad_N  # delay
+    df_D = 1 / (ofdm_frame.N * t_frame) / zeropad_P  # Doppler frequency
+    
+    # Map axis
+    cp_samples = ofdm_frame.CP * ofdm_frame.M
+    delay_axis = np.arange(ofdm_frame.K * zeropad_N) * dtau  #! CAUTION: This was np.arange(cp_samples* zeropad_N) * dtau in previous implementation
+    doppler_axis = (np.arange(ofdm_frame.N * zeropad_P) - np.floor(ofdm_frame.N * zeropad_P / 2)) * df_D
+    
+    title = "Range-Doppler Map"
+    subtitle_params_values = {
+        "Payload modulation": ofdm_frame.payload_mod
+    }
+    subtitle = f"Parameters: {' - '.join(sorted([f'{k}: {v}' for k, v in subtitle_params_values.items()]))}"
+    
+    plt.figure(title, figsize=classical)
+    use_latex()
+    if view_title:
+        plt.suptitle(title, fontsize=14, fontweight="bold")
+        plt.title(subtitle, fontsize=10, fontstyle="italic")
+    
+    # Range-Doppler map
+    plt.pcolormesh(delay_axis, doppler_axis, abs(ofdm_frame.range_doppler_map), shading="nearest")
+    # plt.imshow(np.abs(ofdm_frame.range_doppler_map), aspect='auto', extent=[0, len(delay_axis), 0, len(doppler_axis)], origin='lower', cmap='viridis')
+    plt.colorbar(label='Magnitude')
+    plt.ylabel('Doppler Frequency (Hz)')
+    plt.xlabel('Range (m)')
     plt.tight_layout()
