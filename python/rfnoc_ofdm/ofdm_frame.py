@@ -507,14 +507,16 @@ class ofdmFrame:
         """
         tsymbols_preamble = self.modulate_symbols(self.fsymbols_preamble)
         pulse_corr = scipy_correlate(self.tsymbols_rx, tsymbols_preamble, mode='full')[self.preamble_tlen-1:len(self.tsymbols_rx)+self.preamble_tlen-1]
-        max_idx = np.argmax(abs(pulse_corr))
+        abs_corr = abs(pulse_corr)        
+        max_idx = np.argmax(abs_corr)
         
         # Check if it is a valid index
         frame_len = len(self.tsymbols_rx)
         if frame_len - max_idx < self.frame_tlen:
-
-            # Take the second maximum index
-            max_idx = np.argsort(abs(pulse_corr))[-2]
-            print(f"CAUTION: The frame length is too short, the second maximum index is used: {max_idx}")
+            # Not enough samples, find the second maximum index
+            abs_corr[max_idx] = 0
+            second_max_idx = np.argmax(abs_corr)            
+            max_idx = second_max_idx
+            # print(f"CAUTION: The frame length is too short, the second maximum index is used: {max_idx}")
         
         return max_idx

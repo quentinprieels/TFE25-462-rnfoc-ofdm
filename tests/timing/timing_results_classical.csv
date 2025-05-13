@@ -1,0 +1,376 @@
+Function          , Time (ms)
+synchronization   , 83.20424599514809
+demodulation      ,  3.048439997655805
+channel_estimation, 12.842030999308918
+equalization      ,  0.2566940020187758
+delay_doppler     ,  1.137954997830093
+synchronization   , 68.97757599654142
+demodulation      ,  3.6414610003703274
+channel_estimation, 11.031112000637222
+equalization      ,  0.255393999395892
+delay_doppler     ,  1.1334270020597614
+synchronization   , 67.7884550023009
+demodulation      ,  2.944546999060549
+channel_estimation, 10.769665001134854
+equalization      ,  0.24747299903538078
+delay_doppler     ,  0.9782380002434365
+synchronization   , 71.8147500010673
+demodulation      ,  3.031377993465867
+channel_estimation, 10.545621000346728
+equalization      ,  0.2536100000725128
+delay_doppler     ,  1.0392890035291202
+synchronization   , 66.72595399868442
+demodulation      ,  2.93093499931274
+channel_estimation, 11.055753006075975
+equalization      ,  0.24910700449254364
+delay_doppler     ,  0.9498519939370453
+synchronization   , 67.75016600295203
+demodulation      ,  3.0428289974224754
+channel_estimation, 10.818385999300517
+equalization      ,  0.2593690005596727
+delay_doppler     ,  1.0066360046039335
+synchronization   , 67.64334200124722
+demodulation      ,  3.0751840022276156
+channel_estimation, 12.926682997203898
+equalization      ,  0.2567530027590692
+delay_doppler     ,  0.9462460002396256
+synchronization   , 68.00465199921746
+demodulation      ,  3.095715001109056
+channel_estimation, 10.337796004023403
+equalization      ,  0.27876199601450935
+delay_doppler     ,  0.9380350020364858
+synchronization   , 71.87853499635821
+demodulation      ,  2.9604960000142455
+channel_estimation,  9.868303997791372
+equalization      ,  0.25504399673081934
+delay_doppler     ,  0.9101789983105846
+synchronization   , 67.25681299576536
+demodulation      ,  3.016112001205329
+channel_estimation, 12.131399998907
+equalization      ,  0.2506910022930242
+delay_doppler     ,  0.9408210025867447
+synchronization   , 68.34528000035789
+demodulation      ,  3.0725679971510544
+channel_estimation, 10.022567999840248
+equalization      ,  0.25584000104572624
+delay_doppler     ,  1.038804002746474
+synchronization   , 66.97124500351492
+demodulation      ,  2.963515005831141
+channel_estimation, 11.221230000955984
+equalization      ,  0.25401099992450327
+delay_doppler     ,  0.9359410032629967
+synchronization   , 66.053335001925
+demodulation      ,  3.502656996715814
+channel_estimation, 10.1395660021808
+equalization      ,  0.2578289931989275
+delay_doppler     ,  0.9616839961381629
+synchronization   , 65.56348499725573
+demodulation      ,  3.574396003386937
+channel_estimation, 10.08430000365479
+equalization      ,  0.2588519928394817
+delay_doppler     ,  1.0601669928291813
+synchronization   , 68.43868199939607
+demodulation      ,  3.06883600569563
+channel_estimation, 10.28779600164853
+equalization      ,  0.25942699721781537
+delay_doppler     ,  0.976005001575686
+synchronization   , 68.34514899674105
+demodulation      ,  3.7078159948578104
+channel_estimation, 11.786234994360711
+equalization      ,  0.2540679997764528
+delay_doppler     ,  0.9816029996727593
+synchronization   , 65.90024400065886
+demodulation      ,  3.4653690017876215
+channel_estimation, 11.515688005601987
+equalization      ,  0.26278999575879425
+delay_doppler     ,  0.9550780014251359
+synchronization   , 69.60135199915385
+demodulation      ,  3.0487269978038967
+channel_estimation, 10.23833999352064
+equalization      ,  0.2602029999252409
+delay_doppler     ,  0.9822590000112541
+synchronization   , 68.75581400527153
+demodulation      ,  3.6938870034646243
+channel_estimation, 11.72836899786489
+equalization      ,  0.2495219960110262
+delay_doppler     ,  0.9643509984016418
+synchronization   , 65.77961400034837
+demodulation      ,  3.560723998816684
+channel_estimation, 11.506914997880813
+equalization      ,  0.25979299971368164
+delay_doppler     ,  0.9447230040677823
+synchronization   , 69.64041700121015
+demodulation      ,  2.992084999277722
+channel_estimation, 10.280219998094253
+equalization      ,  0.2603920002002269
+delay_doppler     ,  0.9586429951013997
+synchronization   , 68.5358949995134
+demodulation      ,  3.706714000145439
+channel_estimation, 11.757469997974113
+equalization      ,  0.2563320012995973
+delay_doppler     ,  0.9638250048737973
+synchronization   , 65.88810600078432
+demodulation      ,  3.486245004751254
+channel_estimation, 11.53999400412431
+equalization      ,  0.27048299671150744
+delay_doppler     ,  0.9495479971519671
+synchronization   , 69.49534500017762
+demodulation      ,  3.027008002391085
+channel_estimation, 10.221824995824136
+equalization      ,  0.25433699920540676
+delay_doppler     ,  0.963159000093583
+synchronization   , 68.30830999388127
+demodulation      ,  3.7243490005494095
+channel_estimation, 11.788219002482947
+equalization      ,  0.25481099874014035
+delay_doppler     ,  0.9680889997980557
+synchronization   , 65.78919999446953
+demodulation      ,  3.553163005562965
+channel_estimation, 11.495384002046194
+equalization      ,  0.26575000083539635
+delay_doppler     ,  0.9464000031584874
+synchronization   , 69.6783300008974
+demodulation      ,  3.010353000718169
+channel_estimation, 10.265254000842106
+equalization      ,  0.2550999997765757
+delay_doppler     ,  0.9625540042179637
+synchronization   , 68.39936000324087
+demodulation      ,  3.6923549996572547
+channel_estimation, 11.755945997720119
+equalization      ,  0.25355300022056326
+delay_doppler     ,  0.9653879969846457
+synchronization   , 65.87525500071933
+demodulation      ,  3.5529309971025214
+channel_estimation, 11.548755006515421
+equalization      ,  0.26418200286570936
+delay_doppler     ,  0.9501789973000996
+synchronization   , 69.72645300265867
+demodulation      ,  3.0134539993014187
+channel_estimation, 10.225042002275586
+equalization      ,  0.25812799867708236
+delay_doppler     ,  0.9724140036269091
+synchronization   , 68.65829799789935
+demodulation      ,  3.895456000464037
+channel_estimation, 11.803212997619994
+equalization      ,  0.2545079987612553
+delay_doppler     ,  0.9657560003688559
+synchronization   , 66.08515699917916
+demodulation      ,  3.594729998440016
+channel_estimation, 11.545768000360113
+equalization      ,  0.26860700018005446
+delay_doppler     ,  0.9492850003880449
+synchronization   , 70.26162200054387
+demodulation      ,  2.980103003210388
+channel_estimation, 10.261814997647889
+equalization      ,  0.2595920013845898
+delay_doppler     ,  0.9708959987619892
+synchronization   , 68.69245199777652
+demodulation      ,  3.6953279995941557
+channel_estimation, 11.753043007047381
+equalization      ,  0.25186699349433184
+delay_doppler     ,  0.9697880013845861
+synchronization   , 65.99750099849189
+demodulation      ,  3.5975160062662326
+channel_estimation, 11.53856599557912
+equalization      ,  0.26777399762067944
+delay_doppler     ,  0.9472790043218993
+synchronization   , 69.9548499978846
+demodulation      ,  2.9326739968382753
+channel_estimation, 10.31865700497292
+equalization      ,  0.25487800303380936
+delay_doppler     ,  0.9710800004540943
+synchronization   , 68.64725099876523
+demodulation      ,  3.7295689980965108
+channel_estimation, 11.814024001068901
+equalization      ,  0.25267500313930213
+delay_doppler     ,  0.9664430035627447
+synchronization   , 66.26538300042739
+demodulation      ,  3.576308998162858
+channel_estimation, 11.551659998076502
+equalization      ,  0.2747850012383424
+delay_doppler     ,  0.9483530011493713
+synchronization   , 70.0457679995452
+demodulation      ,  2.9818510010954924
+channel_estimation, 10.388575996330474
+equalization      ,  0.25478899624431506
+delay_doppler     ,  0.9821490020840429
+synchronization   , 68.77279799664393
+demodulation      ,  3.802505998464767
+channel_estimation, 11.78923700354062
+equalization      ,  0.26265199994668365
+delay_doppler     ,  0.9683499956736341
+synchronization   , 66.17427099990891
+demodulation      ,  3.5480149963404983
+channel_estimation, 11.528671995620243
+equalization      ,  0.2726340026129037
+delay_doppler     ,  0.9471550001762807
+synchronization   , 69.98046499938937
+demodulation      ,  2.95434299914632
+channel_estimation, 10.265292999974918
+equalization      ,  0.26059799711219966
+delay_doppler     ,  0.9739290035213344
+synchronization   , 69.09099699987564
+demodulation      ,  3.808292000030633
+channel_estimation, 11.757344000216108
+equalization      ,  0.25302999711129814
+delay_doppler     ,  0.9668269995017909
+synchronization   , 65.94861199846491
+demodulation      ,  3.5992120028822683
+channel_estimation, 11.515045000123791
+equalization      ,  0.2678829987416975
+delay_doppler     ,  0.939526995352935
+synchronization   , 69.9550480057951
+demodulation      ,  2.957630997116212
+channel_estimation, 10.236441004963126
+equalization      ,  0.2582730012363754
+delay_doppler     ,  0.9725299969431944
+synchronization   , 68.84388100297656
+demodulation      ,  3.7319479961297475
+channel_estimation, 11.803074994531926
+equalization      ,  0.2549659984651953
+delay_doppler     ,  0.9662759985076264
+synchronization   , 66.78443300188519
+demodulation      ,  3.636148998339195
+channel_estimation, 11.526893002155703
+equalization      ,  0.2616120036691427
+delay_doppler     ,  0.9503679975750856
+synchronization   , 69.8353900006623
+demodulation      ,  2.964329003589228
+channel_estimation, 10.222386998066213
+equalization      ,  0.258793996181339
+delay_doppler     ,  0.9648529958212748
+synchronization   , 69.00789299834287
+demodulation      ,  3.717436993611045
+channel_estimation, 11.768323995056562
+equalization      ,  0.2565380054875277
+delay_doppler     ,  0.965942999755498
+synchronization   , 66.01174500246998
+demodulation      ,  3.5697429993888363
+channel_estimation, 11.510308002470993
+equalization      ,  0.266462993749883
+delay_doppler     ,  0.9379619950777851
+synchronization   , 70.05937500071013
+demodulation      ,  2.9870430007576942
+channel_estimation, 10.23123200138798
+equalization      ,  0.2577880004537292
+delay_doppler     ,  0.968988002568949
+synchronization   , 68.51699900289532
+demodulation      ,  3.7606449986924417
+channel_estimation, 11.808903000201099
+equalization      ,  0.2556360050220974
+delay_doppler     ,  0.9697560017229989
+synchronization   , 66.24830499640666
+demodulation      ,  3.562578000128269
+channel_estimation, 11.542410000402015
+equalization      ,  0.2653970004757866
+delay_doppler     ,  0.9501949971308932
+synchronization   , 69.94473899976583
+demodulation      ,  2.9704059998039156
+channel_estimation, 10.304443996574264
+equalization      ,  0.2608380018500611
+delay_doppler     ,  0.96364500495838
+synchronization   , 68.50653800211148
+demodulation      ,  3.742287997738458
+channel_estimation, 11.991737002972513
+equalization      ,  0.2599539948278107
+delay_doppler     ,  0.973340000200551
+synchronization   , 66.12280000263127
+demodulation      ,  3.4325099986745045
+channel_estimation, 11.542584004928358
+equalization      ,  0.26834799791686237
+delay_doppler     ,  0.9455760009586811
+synchronization   , 70.1796649955213
+demodulation      ,  2.9755200012004934
+channel_estimation, 10.265391996654216
+equalization      ,  0.26045800041174516
+delay_doppler     ,  0.9711770035210066
+synchronization   , 68.7277820034069
+demodulation      ,  3.766417001315858
+channel_estimation, 11.76794300408801
+equalization      ,  0.24950599618023261
+delay_doppler     ,  0.9575840012985282
+synchronization   , 66.06963000376709
+demodulation      ,  3.5653890008688904
+channel_estimation, 11.519642001076136
+equalization      ,  0.2646919965627603
+delay_doppler     ,  0.9364740035380237
+synchronization   , 69.8920979994
+demodulation      ,  2.972209003928583
+channel_estimation, 10.20820999838179
+equalization      ,  0.2626630011945963
+delay_doppler     ,  0.9621839999454096
+synchronization   , 68.86728099925676
+demodulation      ,  3.759567996894475
+channel_estimation, 11.741800997697283
+equalization      ,  0.250283999776002
+delay_doppler     ,  0.9654300010879524
+synchronization   , 66.0359960020287
+demodulation      ,  3.550686997186858
+channel_estimation, 11.513053003000095
+equalization      ,  0.2673029957804829
+delay_doppler     ,  0.9448389973840676
+synchronization   , 69.79527399380459
+demodulation      ,  2.9860520007787272
+channel_estimation, 10.22056900546886
+equalization      ,  0.26269099907949567
+delay_doppler     ,  0.9699549991637468
+synchronization   , 68.80297099996824
+demodulation      ,  3.7212699971860275
+channel_estimation, 11.780688997532707
+equalization      ,  0.2573710007709451
+delay_doppler     ,  0.9722190006868914
+synchronization   , 66.0608050020528
+demodulation      ,  3.539432000252418
+channel_estimation, 11.515881000377703
+equalization      ,  0.2658989978954196
+delay_doppler     ,  0.9404790034750476
+synchronization   , 70.04064999637194
+demodulation      ,  2.9576689994428307
+channel_estimation, 10.228452003502753
+equalization      ,  0.2595329933683388
+delay_doppler     ,  0.9721379974507727
+synchronization   , 69.0794559995993
+demodulation      ,  3.808744004345499
+channel_estimation, 11.774015001719818
+equalization      ,  0.2587530034361407
+delay_doppler     ,  0.96925999969244
+synchronization   , 66.34458999906201
+demodulation      ,  3.463463996013161
+channel_estimation, 11.561670995433815
+equalization      ,  0.268123003479559
+delay_doppler     ,  0.9546419969410636
+synchronization   , 70.31155300501268
+demodulation      ,  2.984607002872508
+channel_estimation, 10.232750995783135
+equalization      ,  0.25484700017841533
+delay_doppler     ,  0.977379000687506
+synchronization   , 68.82419800240314
+demodulation      ,  3.8018029954400845
+channel_estimation, 11.779338004998863
+equalization      ,  0.2591420052340254
+delay_doppler     ,  0.966659004916437
+synchronization   , 66.27387500338955
+demodulation      ,  3.4621399972820655
+channel_estimation, 11.508939001942053
+equalization      ,  0.26440299552632496
+delay_doppler     ,  0.9428030025446787
+synchronization   , 69.88420400011819
+demodulation      ,  2.9907190037192777
+channel_estimation, 10.294047002389561
+equalization      ,  0.26149100449401885
+delay_doppler     ,  0.9735019993968308
+synchronization   , 68.8191419976647
+demodulation      ,  3.7386999974842183
+channel_estimation, 11.803359004261438
+equalization      ,  0.255279999691993
+delay_doppler     ,  0.9758560045156628
+synchronization   , 66.10097399970982
+demodulation      ,  3.514806005114224
+channel_estimation, 11.51590900553856
+equalization      ,  0.2600759980850853
+delay_doppler     ,  0.9409009944647551
+synchronization   , 73.33733700215816
+demodulation      ,  3.426846000365913
+channel_estimation, 12.342778005404398
+equalization      ,  0.33371499739587307
+delay_doppler     ,  1.2390909978421405
