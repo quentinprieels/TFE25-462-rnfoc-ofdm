@@ -6,10 +6,8 @@ import matplotlib as mpl
 
 import sys
 sys.path.append('/usr/local/lib/python3.10/site-packages')  # Make sure pyfunctionthon find the rfnoc_ofdm package
-from rfnoc_ofdm.ofdm_frame import ofdmFrame
+
 from rfnoc_ofdm.plotting import colors, classical, use_latex
-from rfnoc_ofdm.metric_calculator import metric_schmidl, moving_sum
-from rfnoc_ofdm.detector import find_max_idx
 
 results_file = "timing_results_initial.csv"
 
@@ -34,7 +32,7 @@ print(f"Total common time: {common_time} ms")
 
 # Color for each block
 block_colors = {
-    "synchronization": colors["line1"],
+    "synchronization": colors["line7"],
     "demodulation": colors["line2"],
     "channel_estimation": colors["line3"],
     "equalization": colors["line4"],
@@ -47,8 +45,13 @@ x = ["Communication", "Common", "RADAR" ]
 # Bar 1 is "Synchornization", "common", "common"
 bar1 = [
     common_time,
-    results.loc[results['Function'] == 'synchronization', 'Time (ms)'].values[0],
+    results.loc[results['Function'] == 'synchronization', 'Time (ms)'].values[0][0],
     common_time
+]
+bar1_std = [
+    0,
+    results.loc[results['Function'] == 'synchronization', 'Time (ms)'].values[0][1],
+    0
 ]
 bar1_colors = [
     block_colors["common"],
@@ -63,9 +66,14 @@ bar1_hatch = [
 # Bar 2 is "OFDM_demodulation", "OFDM_channel_equalisation", "new_SISO_OFDM_DFRC_RADAR_RX"
 # Bar 2 is "demodulation", "equalization", "delay_doppler"
 bar2 = [
-    results.loc[results['Function'] == 'equalization', 'Time (ms)'].values[0],
-    results.loc[results['Function'] == 'demodulation', 'Time (ms)'].values[0],
-    results.loc[results['Function'] == 'delay_doppler', 'Time (ms)'].values[0]    
+    results.loc[results['Function'] == 'equalization', 'Time (ms)'].values[0][0],
+    results.loc[results['Function'] == 'demodulation', 'Time (ms)'].values[0][0],
+    results.loc[results['Function'] == 'delay_doppler', 'Time (ms)'].values[0][0] 
+]
+bar2_std = [
+    results.loc[results['Function'] == 'equalization', 'Time (ms)'].values[0][1],
+    results.loc[results['Function'] == 'demodulation', 'Time (ms)'].values[0][1],
+    results.loc[results['Function'] == 'delay_doppler', 'Time (ms)'].values[0][1]
 ]
 bar2_colors = [
     block_colors["equalization"],
@@ -77,7 +85,12 @@ bar2_colors = [
 # Bar 3 is "channel_estimation", "0", "0"
 bar3 = [
     0,
-    results.loc[results['Function'] == 'channel_estimation', 'Time (ms)'].values[0],
+    results.loc[results['Function'] == 'channel_estimation', 'Time (ms)'].values[0][0],
+    0
+]
+bar3_std = [
+    0,
+    results.loc[results['Function'] == 'channel_estimation', 'Time (ms)'].values[0][1],
     0
 ]
 bar3_colors = [
@@ -86,29 +99,44 @@ bar3_colors = [
     "none",  # No color since the value is 0
 ]
 
-# use the Montserrat-Medium font for the plot (.ttf file in the same directory)
-font = FontProperties(fname='Montserrat-Medium.ttf')
-font.set_size(14)
 mpl.rcParams['hatch.linewidth'] = 0.8  # Adjust as needed
-
 
 # Figure parameters
 bin_height = 0.8
 
 # reduce the margins
 
-plt.figure(figsize=(12, 2.5))  # Reduced height
+plt.figure(figsize=(12, 3.4))  # Reduced height
+use_latex()
 plt.barh(x, bar1, color=bar1_colors, hatch=bar1_hatch, height=bin_height)
+for i, (val, err, xval) in enumerate(zip(bar1, bar1_std, x)):
+    if err > 0: plt.errorbar(val, i, xerr=err, fmt='|', color='black', capsize=3, capthick=1, elinewidth=1)
 plt.barh(x, bar2, left=bar1, color=bar2_colors, height=bin_height)
+for i, (val, err, xval) in enumerate(zip(bar2, bar2_std, x)):
+    if err > 0: plt.errorbar(val + bar1[i], i, xerr=err, fmt='|', color='black', capsize=3, capthick=1, elinewidth=1)
 plt.barh(x, bar3, left=np.add(bar1, bar2), color=bar3_colors, height=bin_height)
+for i, (val, err, xval) in enumerate(zip(bar3, bar3_std, x)):
+    if err > 0: plt.errorbar(val + bar1[i] + bar2[i], i, xerr=err, fmt='|', color='black', capsize=3, capthick=1, elinewidth=1)
 
-plt.xlabel('Time [ms]', fontproperties=font)
-#plt.ylabel('Chain', fontproperties=font)
-plt.xticks(fontproperties=font)
-plt.yticks(fontproperties=font)
-plt.subplots_adjust(bottom=0.2)  # Adjust bottom margin
+plt.xlabel('Time [ms]')
+plt.xticks()
+plt.yticks()
+plt.subplots_adjust(bottom=0.2)
 plt.subplots_adjust(left=0.15)  # Adjust left margin
 
 #plt.savefig('complexity.pdf', bbox_inches='tight', pad_inches=0)
-# plt.legend()
+# Create legend with custom colored squares for each operation
+legend_elements = [
+    plt.Rectangle((0, 0), 1, 1, facecolor=block_colors["synchronization"], label='Synchronization'),
+    plt.Rectangle((0, 0), 1, 1, facecolor=block_colors["demodulation"], label='Demodulation'),
+    plt.Rectangle((0, 0), 1, 1, facecolor=block_colors["channel_estimation"], label='Channel Estimation'),
+    plt.Rectangle((0, 0), 1, 1, facecolor=block_colors["equalization"], label='Equalization'),
+    plt.Rectangle((0, 0), 1, 1, facecolor=block_colors["delay_doppler"], label='Delay-Doppler')
+]
+
+# Position the legend below the plot
+plt.legend(handles=legend_elements, loc='upper center', 
+           bbox_to_anchor=(0.5, -0.2), ncol=5, frameon=False)
+plt.tight_layout()
+plt.savefig('timing_results_initial.pdf')
 plt.show()

@@ -70,6 +70,7 @@ colors = {
     "line4": red,
     "line5": yellow,
     "line6": blue_bright,
+    "line7": blue_light,
 }
 
 # Size

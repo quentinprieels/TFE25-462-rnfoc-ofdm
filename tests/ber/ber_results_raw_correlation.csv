@@ -1,21 +1,21 @@
-Filename                      , BER
-rx_samples_raw_meas1.fc32.dat , 0.0
-rx_samples_raw_meas2.fc32.dat , 0.0
-rx_samples_raw_meas3.fc32.dat , 0.0
-rx_samples_raw_meas4.fc32.dat , 0.0
-rx_samples_raw_meas5.fc32.dat , 0.0
-rx_samples_raw_meas6.fc32.dat , 0.0
-rx_samples_raw_meas7.fc32.dat , 0.0
-rx_samples_raw_meas8.fc32.dat , 0.0
-rx_samples_raw_meas9.fc32.dat , 0.0
-rx_samples_raw_meas10.fc32.dat, 0.0
-rx_samples_raw_meas11.fc32.dat, 0.0
-rx_samples_raw_meas12.fc32.dat, 0.0
-rx_samples_raw_meas13.fc32.dat, 0.0
-rx_samples_raw_meas14.fc32.dat, 0.0
-rx_samples_raw_meas15.fc32.dat, 0.0
-rx_samples_raw_meas16.fc32.dat, 0.0
-rx_samples_raw_meas17.fc32.dat, 0.0
-rx_samples_raw_meas18.fc32.dat, 0.0
-rx_samples_raw_meas19.fc32.dat, 0.0
-rx_samples_raw_meas20.fc32.dat, 0.0
+Filename,BER
+rx_samples_raw_meas1.fc32.dat,0.0
+rx_samples_raw_meas2.fc32.dat,0.0
+rx_samples_raw_meas3.fc32.dat,0.0
+rx_samples_raw_meas4.fc32.dat,0.0
+rx_samples_raw_meas5.fc32.dat,0.0
+rx_samples_raw_meas6.fc32.dat,0.0
+rx_samples_raw_meas7.fc32.dat,0.0
+rx_samples_raw_meas8.fc32.dat,0.0
+rx_samples_raw_meas9.fc32.dat,0.0
+rx_samples_raw_meas10.fc32.dat,0.0
+rx_samples_raw_meas11.fc32.dat,0.0
+rx_samples_raw_meas12.fc32.dat,0.0
+rx_samples_raw_meas13.fc32.dat,0.0
+rx_samples_raw_meas14.fc32.dat,0.0
+rx_samples_raw_meas15.fc32.dat,0.0
+rx_samples_raw_meas16.fc32.dat,0.0
+rx_samples_raw_meas17.fc32.dat,0.0
+rx_samples_raw_meas18.fc32.dat,0.0
+rx_samples_raw_meas19.fc32.dat,0.0
+rx_samples_raw_meas20.fc32.dat,0.0
