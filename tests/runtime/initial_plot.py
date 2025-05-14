@@ -41,6 +41,7 @@ block_colors = {
 }
 
 x = ["Communication", "Common", "RADAR" ]
+x = ["", " ", "  "]  # Empty labels for the bars
 
 # Bar 1 is "Synchornization", "common", "common"
 bar1 = [
@@ -136,7 +137,7 @@ legend_elements = [
 
 # Position the legend below the plot
 plt.legend(handles=legend_elements, loc='upper center', 
-           bbox_to_anchor=(0.5, -0.2), ncol=5, frameon=False)
+           bbox_to_anchor=(0.5, -0.2), ncol=3, frameon=False)
 plt.tight_layout()
 plt.savefig('timing_results_initial.pdf')
 plt.show()

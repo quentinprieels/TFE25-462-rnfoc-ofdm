@@ -40,6 +40,7 @@ block_colors = {
 }
 
 x = ["Communication", "Common", "RADAR" ]
+x = ["", " ", "  "]  # Empty labels for the bars
 
 # Bar 1 is "common", 'demodulation' "common"
 bar1 = [
