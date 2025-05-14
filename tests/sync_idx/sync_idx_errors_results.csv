@@ -1,0 +1,22 @@
+index, Filename                                                  , Index Error
+    0, rx_samples_schmidl_cox_meas19.signal_detected_idx.sc16.dat, -8
+    1, rx_samples_schmidl_cox_meas6.signal_detected_idx.sc16.dat , -9
+    2, rx_samples_schmidl_cox_meas7.signal_detected_idx.sc16.dat , -6
+    3, rx_samples_schmidl_cox_meas21.signal_detected_idx.sc16.dat, -6
+    4, rx_samples_schmidl_cox_meas14.signal_detected_idx.sc16.dat, 4
+    5, rx_samples_schmidl_cox_meas9.signal_detected_idx.sc16.dat , -2
+    6, rx_samples_schmidl_cox_meas10.signal_detected_idx.sc16.dat, 4
+    7, rx_samples_schmidl_cox_meas8.signal_detected_idx.sc16.dat , 1
+    8, rx_samples_schmidl_cox_meas17.signal_detected_idx.sc16.dat, -11
+    9, rx_samples_schmidl_cox_meas2.signal_detected_idx.sc16.dat , -5
+   10, rx_samples_schmidl_cox_meas11.signal_detected_idx.sc16.dat, -7
+   11, rx_samples_schmidl_cox_meas3.signal_detected_idx.sc16.dat , -6
+   12, rx_samples_schmidl_cox_meas4.signal_detected_idx.sc16.dat , -8
+   13, rx_samples_schmidl_cox_meas1.signal_detected_idx.sc16.dat , -8
+   14, rx_samples_schmidl_cox_meas15.signal_detected_idx.sc16.dat, -1
+   15, rx_samples_schmidl_cox_meas13.signal_detected_idx.sc16.dat, -6
+   16, rx_samples_schmidl_cox_meas18.signal_detected_idx.sc16.dat, -10
+   17, rx_samples_schmidl_cox_meas12.signal_detected_idx.sc16.dat, -1
+   18, rx_samples_schmidl_cox_meas20.signal_detected_idx.sc16.dat, -4
+   19, rx_samples_schmidl_cox_meas5.signal_detected_idx.sc16.dat , -3
+   20, rx_samples_schmidl_cox_meas16.signal_detected_idx.sc16.dat, 0

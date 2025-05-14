@@ -220,7 +220,21 @@ class ofdmFrame:
     # Time domain symbols - demodulation #
     ######################################
     
-    def demodulate_symbols(self, remove_cp_at: str = "end") -> np.ndarray:
+    def reshape_after_hardware_fft(self, subcarrier_idx_to_skip: int = 2) -> None:
+        """
+        Reshape the received frequency domain symbols after the hardware FFT, to remove oversampling.
+        
+        Parameters:
+        - subcarrier_idx_to_skip: Takes the K samples from subcarrier_idx_to_skip * K to subcarrier_idx_to_skip * K + K
+                                  This value can be experimentally determined by looking at the received waveform after the FFT.
+        """
+        fsymbols = self.tsymbols_rx
+        fsymbols = np.reshape(fsymbols, (self.N, (self.K * self.M)))
+        start_idx = subcarrier_idx_to_skip * self.K
+        fsymbols =  1/np.sqrt(self.K * self.M) * fsymbols[:, start_idx:start_idx+self.K]
+        self.fsymbols_payload_rx = fsymbols
+    
+    def demodulate_symbols(self, remove_cp_at: str = "beginning") -> np.ndarray:
         """
         Demodulate the given time domain symbols to the frequency domain.
         
@@ -248,7 +262,7 @@ class ofdmFrame:
             tsymbols = np.reshape(tsymbols, (self.N, (self.K) * self.M))
         elif remove_cp_at == "end":
             tsymbols = np.reshape(tsymbols, (self.N, (self.CP + self.K) * self.M))[:, :-self.CP * self.M]
-        elif remove_cp_at == "begining":
+        elif remove_cp_at == "beginning":
             tsymbols = np.reshape(tsymbols, (self.N, (self.CP + self.K) * self.M))[:, self.CP * self.M:]
         else:
             raise ValueError("Invalid remove_cp_at value")
@@ -257,7 +271,7 @@ class ofdmFrame:
         fsymbols = 1/np.sqrt(self.K * self.M) * np.fft.fft(tsymbols, axis=1)
         return fsymbols[:, :self.K] # Shape: (N, K)
     
-    def demodulate_frame(self, CP_rx: bool = True, remove_cp_at: str = "end", remove_first_symbol: bool = False) -> None:
+    def demodulate_frame(self, CP_rx: bool = True, remove_cp_at: str = "beginning", remove_first_symbol: bool = False) -> None:
         """
         Demodulate the frame.
         

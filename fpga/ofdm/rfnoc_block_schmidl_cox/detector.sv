@@ -47,7 +47,7 @@ module detector #(
 );
 
 // Number of samples after the peak to be at CP/2 of the 1st OFDM symbol
-localparam int MAX_COUNT = HALF_FFT_SIZE + HALPH_CP_SIZE; 
+localparam int MAX_COUNT = HALF_FFT_SIZE - HALPH_CP_SIZE; 
 
 logic fsm_ready;
 logic is_last_forwarded_sample;

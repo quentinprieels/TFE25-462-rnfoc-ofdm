@@ -9,6 +9,7 @@
 #include <uhd/usrp/multi_usrp.hpp> // Although using graph, some utils might be relevant
 #include <uhd/rfnoc/radio_control.hpp>
 #include <uhd/rfnoc/ddc_block_control.hpp>
+#include <uhd/rfnoc/fft_block_control.hpp>
 #include <rfnoc/ofdm/schmidl_cox_block_control.hpp> // Ensure this path is correct for your OOT module
 #include <boost/program_options.hpp>
 #include <boost/format.hpp>
@@ -73,8 +74,8 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
     std::string args, filename, rx_ant, ref, datapath, format, cpu_format, wire_format, output_info;
     double rate, rx_freq, rx_gain, rx_bw, setup_time, seconds_betw_meas;
     size_t total_num_samps, nbr_meas;
-    uint32_t sc_threshold = 0, sc_packet_size = 0, sc_output_select = 0;
-    bool use_schmidl_cox = false;
+    uint32_t sc_threshold = 0, sc_packet_size = 0, sc_output_select = 0, fft_length = 1024 * 4, fft_cp_length = 128 * 4, fileidx_start = 0;
+    bool use_schmidl_cox = false, use_fft = false;
 
     po::options_description desc("Allowed options");
     desc.add_options()
@@ -98,15 +99,20 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
         ("nsamps",      po::value<size_t>(&total_num_samps)->default_value(6912),   "Samples to receive per measurement")
         ("nbr_meas",    po::value<size_t>(&nbr_meas)->default_value(1),             "Number of measurements")
         ("secs",        po::value<double>(&seconds_betw_meas)->default_value(0.5),  "Seconds between measurements")
+        ("fileidx_start", po::value<uint32_t>(&fileidx_start)->default_value(0),      "File index start (for multiple measurements)")
         
         // Datapath and format
-        ("datapath",    po::value<std::string>(&datapath)->default_value("raw"),    "Datapath: 'raw' (radio->ddc->host) or 'schmidl_cox' (radio->ddc->sc->host)")
+        ("datapath",    po::value<std::string>(&datapath)->default_value("raw"),    "Datapath: 'raw' (radio->ddc->host) or 'schmidl_cox' (radio->ddc->sc->host) or 'schmidl_cox_fft (radio->ddc->sc->fft->host)'")
         ("format",      po::value<std::string>(&format)->default_value("sc16"),     "Output file sample format: sc16 or fc32 or int32")
 
-        // Schmidl & Cox block parameters (only used if datapath=schmidl_cox)
+        // Schmidl & Cox block parameters (only used if datapath=schmidl_cox or schmidl_cox_fft)
         ("sc_threshold",    po::value<uint32_t>(&sc_threshold)->default_value(0x00200000),  "Schmidl & Cox threshold value")
         ("sc_packet_size",  po::value<uint32_t>(&sc_packet_size)->default_value(2304),      "Schmidl & Cox packet size value")
         ("sc_output_select", po::value<uint32_t>(&sc_output_select)->default_value(0),      "Schmidl & Cox output select value (0b00: signal with 0, 0b01: valid signal, 0b10: metricMSB, 0b11: metricLSB)")
+
+        // FFT block parameters (only used if datapath=schmidl_cox_fft)
+        ("fft_length",    po::value<uint32_t>(&fft_length)->default_value(1024 * 4),   "FFT length")
+        ("fft_cp_length", po::value<uint32_t>(&fft_cp_length)->default_value(128 * 4), "FFT cyclic prefix length")
     ;
 
     // Parse command-line options
@@ -125,7 +131,8 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
     }
 
     // Validate and set options
-    use_schmidl_cox = (datapath == "schmidl_cox");
+    use_schmidl_cox = (datapath == "schmidl_cox" || datapath == "schmidl_cox_fft");
+    use_fft = (datapath == "schmidl_cox_fft");
 
     if (format != "sc16" && format != "fc32" && format != "int32") {
         std::cerr << "Error: Invalid output format '" << format << "'. Must be 'sc16' or 'fc32' or 'int32'." << std::endl;
@@ -213,6 +220,18 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
         std::cout << "Using Schmidl & Cox: " << sc_ctrl->get_block_id().to_string() << std::endl;
     }
 
+    // FFT Control (only if needed)
+    uhd::rfnoc::block_id_t fft_id(0, "FFT", 0);  // ? Use params from command line
+    uhd::rfnoc::fft_block_control::sptr fft_ctrl;
+    if (use_fft) {
+        fft_ctrl = graph->get_block<uhd::rfnoc::fft_block_control>(fft_id);
+        if (!fft_ctrl) {
+            std::cerr << "Error: No FFT Control blocks found in the graph." << std::endl;
+            return EXIT_FAILURE;
+        }
+        std::cout << "Using FFT: " << fft_ctrl->get_block_id().to_string() << std::endl;
+    }
+
 
 
     //--------------------------------------------------------------------------
@@ -290,6 +309,26 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
         std::cout << boost::format("Read back SC Output Select: 0x%08X (%u)") % read_output_select % read_output_select << std::endl;
     }
 
+    // Set FFT parameters (if using that path)
+    if (use_fft) {
+        // FFT Length
+        if (vm.count("fft_length")) {
+            std::cout << boost::format("Setting FFT Length: %u...") % fft_length << std::endl;
+            fft_ctrl->set_length(fft_length);
+        }
+        uint32_t read_fft_length = fft_ctrl->get_length();
+        std::cout << boost::format("Read back FFT Length: %u") % read_fft_length << std::endl;
+
+        // Cyclic Prefix Length
+        if (vm.count("fft_cp_length")) {
+            std::cout << boost::format("Setting FFT Cyclic Prefix Length: %u...") % fft_cp_length << std::endl;
+            fft_ctrl->set_cp_removal_list(std::vector<uint32_t>{fft_cp_length});
+        }
+        uint32_t read_cp_length = fft_ctrl->get_cp_removal_list()[0];
+        std::cout << boost::format("Read back FFT Cyclic Prefix Length: %u") % read_cp_length << std::endl;
+    }
+
+
     // Allow settings to settle
     std::this_thread::sleep_for(std::chrono::milliseconds(int64_t(1000 * setup_time / 2.0)));
 
@@ -314,7 +353,16 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
                   << " -> " << sc_ctrl->get_block_id().to_string() << ":0" << std::endl;
         graph->connect(ddc_ctrl->get_block_id(), 0, sc_ctrl->get_block_id(), 0);
 
-        stream_source_block_id = sc_ctrl->get_block_id();
+        // Connect: sc[0] -> fft[0]
+        if (use_fft) {
+            std::cout << "Connecting " << sc_ctrl->get_block_id().to_string() << ":" << 0
+                      << " -> " << fft_ctrl->get_block_id().to_string() << ":0" << std::endl;
+            graph->connect(sc_ctrl->get_block_id(), 0, fft_ctrl->get_block_id(), 0);
+            stream_source_block_id = fft_ctrl->get_block_id();
+        } else {
+            stream_source_block_id = sc_ctrl->get_block_id();
+        }
+
         stream_source_port = 0;
     } else {
         // Connect: radio[0] -> ddc[0]
@@ -384,7 +432,7 @@ int UHD_SAFE_MAIN(int argc, char* argv[]) {
         // Create unique filename for each measurement
         std::string current_filename;
         if (nbr_meas > 1) {
-            current_filename = filename + "_" + datapath + "_meas" + std::to_string(meas + 1) + "." + output_info + format + ".dat";
+            current_filename = filename + "_" + datapath + "_meas" + std::to_string(meas + fileidx_start + 1) + "." + output_info + format + ".dat";
         } else {
             current_filename = filename + "_" + datapath + "." + output_info + format + ".dat";
         }

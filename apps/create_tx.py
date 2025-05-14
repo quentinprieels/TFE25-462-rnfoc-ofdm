@@ -9,8 +9,8 @@ from rfnoc_ofdm.plotting import *
 # Signal parameters
 K = 1024                # Number of subcarriers
 CP = 128                # Length of the cyclic prefix
-M = 5                   # Oversampling factor
-N = 256                 # Number of OFDM symbols
+M = 4                   # Oversampling factor
+N = 16                  # Number of OFDM symbols
 preamble_mod = "BPSK"   # Preamble modulation
 payload_mod = "QPSK"    # Payload modulation
 Nt = 4                  # Time domain pilot spacing
@@ -36,7 +36,7 @@ print(f"  Nf: {Nf}")
 print(f"  Random seed: {random_seed}")
 print(f"  Signal filename: {filename}\n")
 
-
+print(f"Number of samples without CP and preamble (N * K * M): {N * K * M}")
 print(f"Number of data samples to receive (N * (K + CP) * M) - nsamp: {N * (K + CP) * M}")
 print(f"Number of samples to transmit ((N+1) * (K + CP) * M) - sig_len: {(N + 1) * (K + CP) * M}")
 print(f"Buffer size for the transmitter - 2*sig_len: {2 * (N + 1) * (K + CP) * M}\n")
@@ -47,4 +47,5 @@ print(f"Generated signal hash: {digest}\n")
 
 print(f"TX COMMAND: ./tx_waveforms_radar --args name=sam subdev \"A:0\" --ant \"TX/RX\" --rate 200e6 --freq 3.2e9 --sig_len {(N + 1) * (K + CP) * M} --spb {2 * (N + 1) * (K + CP) * M} --file \"{filename}\" --gain 30 --ref \"external\"")
 print(f"RX COMMAND RAW: ./rx_to_file --nsamps {2 * (N + 1) * (K + CP) * M} --datapath raw --format sc16")
-print(f"RX COMMAND SCHMIDL COX: ./rx_to_file --nsamps {2 * (N + 1) * (K + CP) * M} --datapath schmidl_cox --format fc32 --sc_packet_size {N * (K + CP) * M} --sc_output_select 1 --sc_threshold {threshold}\n")
+print(f"RX COMMAND SCHMIDL COX: ./rx_to_file --nsamps {2 * (N + 1) * (K + CP) * M} --datapath schmidl_cox --format fc32 --sc_packet_size {N * (K + CP) * M} --sc_output_select 1 --sc_threshold {threshold}")
+print(f"RX COMMAND WITH FFT: ./rx_to_file --nsamps {2 * (N + 1) * (K + CP) * M} --datapath schmidl_cox_fft --format fc32 --sc_packet_size {N * (K + CP) * M} --sc_output_select 1 --sc_threshold {threshold} --fft_length {K * M} --fft_cp_length {CP * M}\n")

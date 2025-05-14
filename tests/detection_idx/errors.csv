@@ -1,5 +1,0 @@
-Error Type,Count,Percentage
-No error,123,61.5
-Frame too short,48,24.0
-Transmitter error,20,10.0
-FPGA index error,9,4.5

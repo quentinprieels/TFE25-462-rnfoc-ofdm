@@ -1,0 +1,25 @@
+SIG LENGTH: 1184256
+2x SIG LENGTH: 2368512
+Signal parameters:
+  K: 1024
+  CP: 128
+  M: 4
+  N: 256
+  preamble_mod: BPSK
+  payload_mod: QPSK
+  Nt: 4
+  Nf: 1
+  Random seed: 42
+  Signal filename: OFDM_frame_1024_128_4_256_BPSK_QPSK.txt
+
+Number of samples without CP and preamble (N * K * M): 1048576
+Number of data samples to receive (N * (K + CP) * M) - nsamp: 1179648
+Number of samples to transmit ((N+1) * (K + CP) * M) - sig_len: 1184256
+Buffer size for the transmitter - 2*sig_len: 2368512
+
+Generated signal hash: ee759190d308
+
+TX COMMAND: ./tx_waveforms_radar --args name=sam subdev "A:0" --ant "TX/RX" --rate 200e6 --freq 3.2e9 --sig_len 1184256 --spb 2368512 --file "OFDM_frame_1024_128_4_256_BPSK_QPSK.txt" --gain 30 --ref "external"
+RX COMMAND RAW: ./rx_to_file --nsamps 2368512 --datapath raw --format sc16
+RX COMMAND SCHMIDL COX: ./rx_to_file --nsamps 2368512 --datapath schmidl_cox --format fc32 --sc_packet_size 1179648 --sc_output_select 1 --sc_threshold 10485760
+RX COMMAND WITH FFT: ./rx_to_file --nsamps 2368512 --datapath schmidl_cox_fft --format fc32 --sc_packet_size 1179648 --sc_output_select 1 --sc_threshold 10485760 --fft_length 4096 --fft_cp_length 512
