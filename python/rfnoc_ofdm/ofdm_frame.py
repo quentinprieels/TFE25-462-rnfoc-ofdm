@@ -97,6 +97,7 @@ class ofdmFrame:
         
         # Generate the time domain symbols
         self.tsymbols = self.modulate_frame()
+        self.tsymbols_preamble = self.modulate_symbols(self.fsymbols_preamble)
         
         # Received symbols
         self.tsymbols_rx = None # Placeholder for the received symbols
@@ -519,8 +520,7 @@ class ofdmFrame:
         This function is used to find the start of the frame in the received signal.
         The preamble is used to find the start of the frame.
         """
-        tsymbols_preamble = self.modulate_symbols(self.fsymbols_preamble)
-        pulse_corr = scipy_correlate(self.tsymbols_rx, tsymbols_preamble, mode='full')[self.preamble_tlen-1:len(self.tsymbols_rx)+self.preamble_tlen-1]
+        pulse_corr = scipy_correlate(self.tsymbols_rx, self.tsymbols_preamble, mode='full')[self.preamble_tlen-1:len(self.tsymbols_rx)+self.preamble_tlen-1]
         abs_corr = abs(pulse_corr)        
         max_idx = np.argmax(abs_corr)
         

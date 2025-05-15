@@ -28,7 +28,25 @@ def synchronization(ofdm_frame: ofdmFrame):
     sync_idx = ofdm_frame.get_frame_synchronization_idx()
     sync_idx = sync_idx + ofdm_frame.preamble_tlen - (ofdm_frame.CP // 2 * ofdm_frame.M)
     ofdm_frame.tsymbols_rx = ofdm_frame.tsymbols_rx[sync_idx:]
-
+    
+def synchronization_utils(ofdm_frame: ofdmFrame):
+    @timer_func
+    def synchronization_util(ofdm_frame: ofdmFrame):
+        ofdm_frame.get_frame_synchronization_idx()
+    
+    # Measure only the time of "True detection"
+    sync_idx = ofdm_frame.get_frame_synchronization_idx()
+    sync_idx = sync_idx + ofdm_frame.preamble_tlen - (ofdm_frame.CP // 2 * ofdm_frame.M)
+    
+    # Make a copy of the frame for re-synchronization measurement
+    ofdm_frame_cpy = ofdmFrame(K=1024, CP=128, M=4, N=256, preamble_mod="BPSK", payload_mod="QPSK", Nt=4, Nf=1, random_seed=42)
+    received_preamble = ofdm_frame.tsymbols_rx.copy()[sync_idx:sync_idx+ofdm_frame_cpy.preamble_tlen]
+    ofdm_frame_cpy.tsymbols_rx = received_preamble
+    synchronization_util(ofdm_frame_cpy)
+    # End of re-synchronization measurement
+    
+    ofdm_frame.tsymbols_rx = ofdm_frame.tsymbols_rx[sync_idx:]
+    
 @timer_func
 def demodulation(ofdm_frame: ofdmFrame):
     ofdm_frame.demodulate_frame()
@@ -59,6 +77,7 @@ for filename in os.listdir(folder):
             
             # Measure each step of the process
             synchronization(ofdm_signal)
+            synchronization_utils(ofdm_signal) # For util-measurement comparison
             demodulation(ofdm_signal)
             channel_estimation(ofdm_signal)
             equalization(ofdm_signal)
@@ -67,4 +86,4 @@ for filename in os.listdir(folder):
 
 # Save results to CSV
 df = pd.DataFrame(results, columns=['Function', 'Time (ms)'])
-df.to_csv("timing_results_initial.csv", index=False)
+df.to_csv("timing_results_initial_util.csv", index=False)

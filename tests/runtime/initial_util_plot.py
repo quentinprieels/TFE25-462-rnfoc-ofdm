@@ -20,9 +20,9 @@ print(results.head())
 results = results.groupby(['Function']).agg({'Time (ms)': ['mean', 'std']}).reset_index()
 print(results)
 
-# Compute the total common time (addition of the mean times of the (synchronization, demodulation, and channel estimation) functions)
-# Extract the mean times for synchronization, demodulation, and channel estimation
-sync_time = results.loc[results['Function'] == 'synchronization', ('Time (ms)', 'mean')].values[0]
+# Compute the total common time (addition of the mean times of the (synchronization_util, demodulation, and channel estimation) functions)
+# Extract the mean times for synchronization_util, demodulation, and channel estimation
+sync_time = results.loc[results['Function'] == 'synchronization_util', ('Time (ms)', 'mean')].values[0]
 demod_time = results.loc[results['Function'] == 'demodulation', ('Time (ms)', 'mean')].values[0]
 channel_est_time = results.loc[results['Function'] == 'channel_estimation', ('Time (ms)', 'mean')].values[0]
 
@@ -32,7 +32,7 @@ print(f"Total common time: {common_time} ms")
 
 # Color for each block
 block_colors = {
-    "synchronization": colors["line7"],
+    "synchronization_util": colors["line7"],
     "demodulation": colors["line2"],
     "channel_estimation": colors["line3"],
     "equalization": colors["line4"],
@@ -46,17 +46,17 @@ x = ["", " ", "  "]  # Empty labels for the bars
 # Bar 1 is "Synchornization", "common", "common"
 bar1 = [
     common_time,
-    results.loc[results['Function'] == 'synchronization', 'Time (ms)'].values[0][0],
+    results.loc[results['Function'] == 'synchronization_util', 'Time (ms)'].values[0][0],
     common_time
 ]
 bar1_std = [
     0,
-    results.loc[results['Function'] == 'synchronization', 'Time (ms)'].values[0][1],
+    results.loc[results['Function'] == 'synchronization_util', 'Time (ms)'].values[0][1],
     0
 ]
 bar1_colors = [
     block_colors["common"],
-    block_colors["synchronization"],
+    block_colors["synchronization_util"],
     block_colors["common"],
 ]
 bar1_hatch = [
@@ -128,7 +128,7 @@ plt.subplots_adjust(left=0.15)  # Adjust left margin
 #plt.savefig('complexity.pdf', bbox_inches='tight', pad_inches=0)
 # Create legend with custom colored squares for each operation
 legend_elements = [
-    plt.Rectangle((0, 0), 1, 1, facecolor=block_colors["synchronization"], label='Synchronization'),
+    plt.Rectangle((0, 0), 1, 1, facecolor=block_colors["synchronization_util"], label='synchronization_util'),
     plt.Rectangle((0, 0), 1, 1, facecolor=block_colors["demodulation"], label='Demodulation'),
     plt.Rectangle((0, 0), 1, 1, facecolor=block_colors["channel_estimation"], label='Channel Estimation'),
     plt.Rectangle((0, 0), 1, 1, facecolor=block_colors["equalization"], label='Equalization'),
@@ -139,5 +139,5 @@ legend_elements = [
 plt.legend(handles=legend_elements, loc='upper center', 
            bbox_to_anchor=(0.5, -0.2), ncol=3, frameon=False)
 plt.tight_layout()
-plt.savefig('timing_results_initial.pdf')
+plt.savefig('timing_results_initial_util.pdf')
 plt.show()
