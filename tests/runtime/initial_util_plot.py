@@ -128,7 +128,7 @@ plt.subplots_adjust(left=0.15)  # Adjust left margin
 #plt.savefig('complexity.pdf', bbox_inches='tight', pad_inches=0)
 # Create legend with custom colored squares for each operation
 legend_elements = [
-    plt.Rectangle((0, 0), 1, 1, facecolor=block_colors["synchronization_util"], label='synchronization_util'),
+    plt.Rectangle((0, 0), 1, 1, facecolor=block_colors["synchronization_util"], label='Synchronization util'),
     plt.Rectangle((0, 0), 1, 1, facecolor=block_colors["demodulation"], label='Demodulation'),
     plt.Rectangle((0, 0), 1, 1, facecolor=block_colors["channel_estimation"], label='Channel Estimation'),
     plt.Rectangle((0, 0), 1, 1, facecolor=block_colors["equalization"], label='Equalization'),

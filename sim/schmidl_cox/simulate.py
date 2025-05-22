@@ -26,9 +26,9 @@ def get_sync_idx_error(ofdm_frame: ofdmFrame, threshold: float = 0.5, plot: bool
     M_wilson = M_wilson / np.max(M_wilson)
     
     # Calculate moving sum
-    N_schmidl = moving_sum(M_schmidl, ofdm_frame.CP * ofdm_frame.M)
-    N_minn = moving_sum(M_minn, ofdm_frame.CP * ofdm_frame.M)
-    N_wilson = moving_sum(M_wilson, ofdm_frame.CP * ofdm_frame.M)
+    N_schmidl = moving_sum(M_schmidl, ofdm_frame.CP * ofdm_frame.M + 1)
+    N_minn = moving_sum(M_minn, ofdm_frame.CP * ofdm_frame.M + 1)
+    N_wilson = moving_sum(M_wilson, ofdm_frame.CP * ofdm_frame.M + 1)
     
     N_schmidl = N_schmidl / np.max(N_schmidl)
     N_minn = N_minn / np.max(N_minn)
@@ -64,22 +64,22 @@ def get_sync_idx_error(ofdm_frame: ofdmFrame, threshold: float = 0.5, plot: bool
         plt.close()
     
     # Adjust the detection indexes
-    detection_idx_schmidl += (ofdm_frame.CP * ofdm_frame.M)
-    detection_idx_schmidl_sum += (ofdm_frame.CP * ofdm_frame.M) // 2
-    detection_idx_minn += (ofdm_frame.CP * ofdm_frame.M)
-    detection_idx_minn_sum += (ofdm_frame.CP * ofdm_frame.M) // 2
-    detection_idx_wilson += (ofdm_frame.CP * ofdm_frame.M)
-    detection_idx_wilson_sum += (ofdm_frame.CP * ofdm_frame.M) // 2
+    # detection_idx_schmidl += (ofdm_frame.CP * ofdm_frame.M)
+    # detection_idx_schmidl_sum
+    # detection_idx_minn += (ofdm_frame.CP * ofdm_frame.M)
+    # detection_idx_minn_sum
+    # detection_idx_wilson += (ofdm_frame.CP * ofdm_frame.M)
+    # detection_idx_wilson_sum
     
-    true_sync_idx = ofdm_frame.preamble_tlen + (ofdm_frame.CP * ofdm_frame.M) // 2
+    true_sync_idx = ofdm_frame.preamble_tlen
     return {
         "Schmidl": detection_idx_schmidl - true_sync_idx,
         "Minn": detection_idx_minn - true_sync_idx,
         "Wilson": detection_idx_wilson - true_sync_idx,
     }, {
-        "Schmidl avg": detection_idx_schmidl_sum - true_sync_idx,
-        "Minn avg": detection_idx_minn_sum - true_sync_idx,
-        "Wilson avg": detection_idx_wilson_sum - true_sync_idx,
+        "Schmidl averaged": detection_idx_schmidl_sum - true_sync_idx,
+        "Minn averaged": detection_idx_minn_sum - true_sync_idx,
+        "Wilson averaged": detection_idx_wilson_sum - true_sync_idx,
     }
 
 
@@ -101,9 +101,9 @@ df_results = pd.DataFrame(metric_results)
 df_avg_results = pd.DataFrame(metric_avg_results)  
 
 # Plot both dataframes
-plot_cdfs(df_results, ofdm_frame, title="CDF of Sync Index Error on metrics")
+plot_cdfs(df_results, ofdm_frame, False, title="CDF of Sync Index Error on metrics")
 plt.savefig("sync_index_error_metrics.pdf")
-plot_cdfs(df_avg_results, ofdm_frame, title="CDF of Sync Index Error on averaged metrics averaged")
+plot_cdfs(df_avg_results, ofdm_frame, True, title="CDF of Sync Index Error on averaged metrics averaged")
 plt.savefig("sync_index_error_metrics_avg.pdf")
 
 

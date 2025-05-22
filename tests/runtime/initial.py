@@ -1,6 +1,7 @@
 import os
 from timeit import default_timer as timer
 import pandas as pd
+from scipy.signal import correlate, oaconvolve as scipy_correlate, fftconvolve
 
 import sys
 sys.path.append('/usr/local/lib/python3.10/site-packages')  # Make sure python find the rfnoc_ofdm package
@@ -43,10 +44,15 @@ def synchronization_utils(ofdm_frame: ofdmFrame):
     received_preamble = ofdm_frame.tsymbols_rx.copy()[sync_idx:sync_idx+ofdm_frame_cpy.preamble_tlen]
     ofdm_frame_cpy.tsymbols_rx = received_preamble
     synchronization_util(ofdm_frame_cpy)
-    # End of re-synchronization measurement
+
+def synchronization_correlate(ofdm_frame: ofdmFrame):
+    @timer_func
+    def correlation(ofdm_frame: ofdmFrame):
+        fftconvolve(ofdm_frame.tsymbols_rx, ofdm_frame.tsymbols_preamble, mode='full')[ofdm_frame.preamble_tlen-1:len(ofdm_frame.tsymbols_rx)+ofdm_frame.preamble_tlen-1]
     
-    ofdm_frame.tsymbols_rx = ofdm_frame.tsymbols_rx[sync_idx:]
-    
+    # Measure the correlation
+    correlation(ofdm_frame)
+
 @timer_func
 def demodulation(ofdm_frame: ofdmFrame):
     ofdm_frame.demodulate_frame()
@@ -75,9 +81,17 @@ for filename in os.listdir(folder):
             ofdm_signal = ofdmFrame(K=1024, CP=128, M=4, N=256, preamble_mod="BPSK", payload_mod="QPSK", Nt=4, Nf=1, random_seed=42)
             ofdm_signal.load_tysmbol_bin(file_path, type="fc32")
             
+            ofdm_signal_v2 = ofdmFrame(K=1024, CP=128, M=4, N=256, preamble_mod="BPSK", payload_mod="QPSK", Nt=4, Nf=1, random_seed=42)
+            ofdm_signal_v2.load_tysmbol_bin(file_path, type="fc32")
+            
+            ofdm_signal_v3 = ofdmFrame(K=1024, CP=128, M=4, N=256, preamble_mod="BPSK", payload_mod="QPSK", Nt=4, Nf=1, random_seed=42)
+            ofdm_signal_v3.load_tysmbol_bin(file_path, type="fc32")
+            
             # Measure each step of the process
             synchronization(ofdm_signal)
-            synchronization_utils(ofdm_signal) # For util-measurement comparison
+            synchronization_utils(ofdm_signal_v2)      # For util-measurement comparison
+            synchronization_correlate(ofdm_signal_v3)  # For correlation measurement
+            
             demodulation(ofdm_signal)
             channel_estimation(ofdm_signal)
             equalization(ofdm_signal)

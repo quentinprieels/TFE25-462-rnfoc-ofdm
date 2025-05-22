@@ -520,7 +520,7 @@ class ofdmFrame:
         This function is used to find the start of the frame in the received signal.
         The preamble is used to find the start of the frame.
         """
-        pulse_corr = scipy_correlate(self.tsymbols_rx, self.tsymbols_preamble, mode='full')[self.preamble_tlen-1:len(self.tsymbols_rx)+self.preamble_tlen-1]
+        pulse_corr = scipy_correlate(self.tsymbols_rx, self.tsymbols_preamble, mode='full', method="fft")[self.preamble_tlen-1:len(self.tsymbols_rx)+self.preamble_tlen-1]
         abs_corr = abs(pulse_corr)        
         max_idx = np.argmax(abs_corr)
         

@@ -178,8 +178,8 @@ module rfnoc_block_schmidl_cox_tb;
     blk_ctrl.reg_write(REG_OUTPUT_SELECT_ADDR, output_select_value);
     
     // File containing IQ samples in sc16 format
-    input_filename = "/export/home/usrpconfig/Documents/GitHub/TFE25-462/rfnoc-ofdm/tests/small/rx_samples_raw.sc16.dat";
-    output_input_filename = "/export/home/usrpconfig/Documents/GitHub/TFE25-462/rfnoc-ofdm/tests/small/rx_samples_raw_out.sc16.dat";
+    input_filename = "/export/home/usrpconfig/Documents/GitHub/TFE25-462/rfnoc-ofdm/data/rx_samples_raw.sc16.dat";
+    output_input_filename = "/export/home/usrpconfig/Documents/GitHub/TFE25-462/rfnoc-ofdm/data/rx_samples_raw_sim_out.sc16.dat";
 
     // Open the input file for reading in binary mode
     input_file = $fopen(input_filename, "rb");
