@@ -71,11 +71,11 @@ def create_pie_chart(data: pd.DataFrame, level: int, column: str, exclude: list[
         for i in range(len(plot_labels))
     ]
     plt.legend(handles=legend_elements, loc='upper center', 
-               bbox_to_anchor=(0.5, 0), ncol=min(2, len(plot_labels)), frameon=False)
+               bbox_to_anchor=(0.5, 0), ncol=min(1, len(plot_labels)), frameon=False)
     plt.tight_layout()
     
 
-create_pie_chart(df, level=0, column='Total LUTs', exclude=['Stream endpoint 0', 'Stream endpoint 1', "RFNoC bloc DDC", "RFNoC bloc DUC", "RFNoC bloc Radio"])
+create_pie_chart(df, level=0, column='Total LUTs', exclude=['Stream endpoint 0', 'Stream endpoint 1', "NoC block DDC", "NoC block DUC", "NoC block Radio"])
 plt.savefig("level_0_rfnoc.pdf", bbox_inches='tight')
 plt.close()
 

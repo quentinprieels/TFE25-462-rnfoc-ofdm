@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 import sys
 sys.path.append('/usr/local/lib/python3.10/site-packages')  # Make sure python find the rfnoc_ofdm package
-from rfnoc_ofdm.plotting import colors, long, use_latex
+from rfnoc_ofdm.plotting import colors, long, use_latex, square, classical
 
 def rmse(signal1: np.ndarray, signal2: np.ndarray) -> float:
     """
@@ -66,7 +66,7 @@ def compare_signals(signal1: np.ndarray, signal1_name: str, signal2: np.ndarray,
         scale_factor = np.max(np.abs(signal1)) / np.max(np.abs(signal2))
         signal2_scaled = signal2 * scale_factor
         
-        plt.figure(figsize=long)
+        plt.figure(figsize=classical)
         use_latex()
         plt.plot(np.abs(signal1), label=f"{signal1_name}", color=colors["line1"])
         plt.plot(np.abs(signal2_scaled), label=f"{signal2_name} (scaled)", linestyle='--', color=colors["line2"])

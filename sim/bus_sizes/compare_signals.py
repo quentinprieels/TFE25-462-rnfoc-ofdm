@@ -180,6 +180,7 @@ results.append(compare_signals(r, "R full precision", r_vcd, "R VCD", plot=plot)
 
 # Moving sum truncate
 r_truncated = truncate_real_to_16_bits(r, 42)
+r_clipped = clip_real_to_16_bits(r)
 r_truncated_vcd = load_axi_signal_from_vcd(
     vcd_file, 
     "rfnoc_block_schmidl_cox_tb.dut.mc0.energy.o_tdata[15:0]",
@@ -190,6 +191,7 @@ r_truncated_vcd = load_axi_signal_from_vcd(
     is_complex=False
 )
 results.append(compare_signals(r, "R full precision", r_truncated, "R truncated", plot=plot))
+results.append(compare_signals(r, "R full precision", r_clipped, "R clipped", plot=plot))
 results.append(compare_signals(r, "R full precision", r_truncated_vcd, "R truncated VCD", plot=plot))
 results.append(compare_signals(r_truncated, "R truncated", r_truncated_vcd, "R truncated VCD", plot=plot))
 
