@@ -44,22 +44,22 @@ def get_sync_idx_error(ofdm_frame: ofdmFrame, threshold: float = 0.5, plot: bool
     
     # Plot the metrics
     if plot:
-        plot_schmidl_cox(ofdm_frame, (M_schmidl, "Schmidl"), threshold=threshold, sync_idx=detection_idx_schmidl, limitate=True)
+        plot_schmidl_cox(ofdm_frame, (M_schmidl, "Schmidl \& Cox"), threshold=threshold, sync_idx=detection_idx_schmidl, limitate=True)
         plt.savefig("schmidl_metric.pdf")
         plt.close()
-        plot_schmidl_cox(ofdm_frame, (N_schmidl, "Schmidl avg"), threshold=threshold, sync_idx=detection_idx_schmidl_sum, info=(M_schmidl, "Schmidl"), limitate=True)
+        plot_schmidl_cox(ofdm_frame, (N_schmidl, "Schmidl \& Cox averaged"), threshold=threshold, sync_idx=detection_idx_schmidl_sum, info=(M_schmidl, "Schmidl"), limitate=True)
         plt.savefig("schmidl_metric_avg.pdf")
         plt.close()
         plot_schmidl_cox(ofdm_frame, (M_minn, "Minn"), threshold=threshold, sync_idx=detection_idx_minn, limitate=True)
         plt.savefig("minn_metric.pdf")
         plt.close()
-        plot_schmidl_cox(ofdm_frame, (N_minn, "Minn avg"), threshold=threshold, sync_idx=detection_idx_minn_sum, info=(M_minn, "Minn"), limitate=True)
+        plot_schmidl_cox(ofdm_frame, (N_minn, "Minn averaged"), threshold=threshold, sync_idx=detection_idx_minn_sum, info=(M_minn, "Minn"), limitate=True)
         plt.savefig("minn_metric_avg.pdf")
         plt.close()
         plot_schmidl_cox(ofdm_frame, (M_wilson, "Wilson"), threshold=threshold, sync_idx=detection_idx_wilson, limitate=True)
         plt.savefig("wilson_metric.pdf")
         plt.close()
-        plot_schmidl_cox(ofdm_frame, (N_wilson, "Wilson avg"), threshold=threshold, sync_idx=detection_idx_wilson_sum, info=(M_wilson, "Wilson"), limitate=True)
+        plot_schmidl_cox(ofdm_frame, (N_wilson, "Wilson averaged"), threshold=threshold, sync_idx=detection_idx_wilson_sum, info=(M_wilson, "Wilson"), limitate=True)
         plt.savefig("wilson_metric_avg.pdf")
         plt.close()
     
@@ -73,11 +73,11 @@ def get_sync_idx_error(ofdm_frame: ofdmFrame, threshold: float = 0.5, plot: bool
     
     true_sync_idx = ofdm_frame.preamble_tlen
     return {
-        "Schmidl": detection_idx_schmidl - true_sync_idx,
+        "Schmidl \& Cox": detection_idx_schmidl - true_sync_idx,
         "Minn": detection_idx_minn - true_sync_idx,
         "Wilson": detection_idx_wilson - true_sync_idx,
     }, {
-        "Schmidl averaged": detection_idx_schmidl_sum - true_sync_idx,
+        "Schmidl \& Cox averaged": detection_idx_schmidl_sum - true_sync_idx,
         "Minn averaged": detection_idx_minn_sum - true_sync_idx,
         "Wilson averaged": detection_idx_wilson_sum - true_sync_idx,
     }

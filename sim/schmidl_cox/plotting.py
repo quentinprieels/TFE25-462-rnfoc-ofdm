@@ -54,7 +54,7 @@ def plot_schmidl_cox(ofdm_frame: ofdmFrame, metric: tuple[np.ndarray, str], thre
     plt.axhline(y=threshold, color=colors['threshold'], linestyle='-.', label="Threshold")
     
     if sync_idx is not None:
-        plt.axvline(x=sync_idx, color=colors['sync'], linestyle='-.', label="Sync index")
+        plt.axvline(x=sync_idx, color=colors['sync'], linestyle='-.', label="\\texttt{sync\_idx}")
     
     # Detection zone
     above_threshold = metric[0] > threshold
