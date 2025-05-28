@@ -60,7 +60,7 @@ def plot_schmidl_cox(ofdm_frame: ofdmFrame, metric: tuple[np.ndarray, str], thre
     above_threshold = metric[0] > threshold
     crossing_points = np.where(np.diff(above_threshold.astype(int)))[0][:2]
     if len(crossing_points) == 2: 
-        plt.axvspan(crossing_points[0], crossing_points[1], color='gray', alpha=0.2, hatch='//')
+        plt.axvspan(crossing_points[0], crossing_points[1], color='gray', alpha=0.2, hatch='//', label="Detection zone")
     
     if limitate:
         payload_start = (ofdm_frame.K + ofdm_frame.CP) * ofdm_frame.M
@@ -118,9 +118,9 @@ def plot_cdfs(df: pd.DataFrame, ofdm_frame: ofdmFrame, gray_area_around_zero: bo
     # Add the gray area of successful detection
     cp_size = ofdm_frame.CP * ofdm_frame.M
     if gray_area_around_zero:
-        plt.axvspan(-cp_size // 2, cp_size // 2, color='gray', alpha=0.2, hatch='//')
+        plt.axvspan(-cp_size // 2, cp_size // 2, color='gray', alpha=0.2, hatch='//', label="Last $MN_{sc}$ samples of preamble")
     else:
-        plt.axvspan(-cp_size, 0, color='gray', alpha=0.2, hatch='//')
+        plt.axvspan(-cp_size, 0, color='gray', alpha=0.2, hatch='//', label="Last $MN_{sc}$ samples of preamble")
     
     plt.xlabel('Error Value [index]')
     plt.ylabel('Cumulative Percentage [\%]')
