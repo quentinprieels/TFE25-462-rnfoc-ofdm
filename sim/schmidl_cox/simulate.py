@@ -47,7 +47,7 @@ def get_sync_idx_error(ofdm_frame: ofdmFrame, threshold: float = 0.5, plot: bool
         plot_schmidl_cox(ofdm_frame, (M_schmidl, "Schmidl \& Cox"), threshold=threshold, sync_idx=detection_idx_schmidl, limitate=True)
         plt.savefig("schmidl_metric.pdf")
         plt.close()
-        plot_schmidl_cox(ofdm_frame, (N_schmidl, "Schmidl \& Cox averaged"), threshold=threshold, sync_idx=detection_idx_schmidl_sum, info=(M_schmidl, "Schmidl"), limitate=True)
+        plot_schmidl_cox(ofdm_frame, (N_schmidl, "Schmidl \& Cox averaged"), threshold=threshold, sync_idx=detection_idx_schmidl_sum, info=(M_schmidl, "Schmidl \& Cox"), limitate=True)
         plt.savefig("schmidl_metric_avg.pdf")
         plt.close()
         plot_schmidl_cox(ofdm_frame, (M_minn, "Minn"), threshold=threshold, sync_idx=detection_idx_minn, limitate=True)
