@@ -14,7 +14,7 @@ new_colors = [colors["line7"], colors["line2"], colors["line3"], colors["line4"]
 results_file = "block_resource.csv"
 df = pd.read_csv(results_file)
 
-def create_pie_chart(data: pd.DataFrame, level: int, column: str, exclude: list[str] = None) -> None:
+def create_pie_chart(data: pd.DataFrame, level: int, column: str, exclude: list[str] = None, min_val: int = 1) -> None:
     # Filder the data by level
     filtered_data = data[data['level'] == level]
     
@@ -71,15 +71,15 @@ def create_pie_chart(data: pd.DataFrame, level: int, column: str, exclude: list[
         for i in range(len(plot_labels))
     ]
     plt.legend(handles=legend_elements, loc='upper center', 
-               bbox_to_anchor=(0.5, 0), ncol=min(1, len(plot_labels)), frameon=False)
+               bbox_to_anchor=(0.5, 0), ncol=min(min_val, len(plot_labels)), frameon=False)
     plt.tight_layout()
     
 
-create_pie_chart(df, level=0, column='Total LUTs', exclude=['Stream endpoint 0', 'Stream endpoint 1', "NoC block DDC", "NoC block DUC", "NoC block Radio"])
+create_pie_chart(df, level=0, column='Total LUTs', exclude=['Stream endpoint 0', 'Stream endpoint 1', "DDC NoC block", "DUC NoC block", "Radio NoC block"])
 plt.savefig("level_0_rfnoc.pdf", bbox_inches='tight')
 plt.close()
 
-create_pie_chart(df, level=1, column='Total LUTs')
+create_pie_chart(df, level=1, column='Total LUTs', min_val=1)
 plt.savefig("level_1_rfnoc_schmidl_cox.pdf", bbox_inches='tight')
 plt.close()
 
