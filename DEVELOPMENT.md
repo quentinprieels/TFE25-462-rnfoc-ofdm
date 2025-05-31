@@ -2,7 +2,6 @@
 
 Refer to the [building.md](BUILDING.md) document for more information on how to build the FPGA image, run the testbench, and load the FPGA image on the USRP device.
 
-
 ## Create a new OOT module
 
 In order to create a new RFNoC OOT module, you can use the `rfnoc_modtool` command. This command will create a new directory with the default structure of your module. To do so, run the following:
